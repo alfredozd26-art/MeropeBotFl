@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, REST, Routes, SlashCommandBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, PermissionFlagsBits, REST, Routes, SlashCommandBuilder } = require('discord.js');
 const dotenv = require('dotenv');
 const storage = require('./server/storage');
 const { searchItemByPartialName, searchItemByPartialNameSync } = require('./utils/itemSearch');
@@ -50,7 +50,7 @@ client.on('interactionCreate', async (interaction) => {
 
   if (interaction.commandName === 'oye') {
     await interaction.reply({
-      content: 'https://tenor.com/view/bokunorhythem-otama-oyecomova-gif-23829255'
+      content: 'https://tenor.com/view/bokunorhythem-otama-eyecomova-gif-23829255'
     });
   }
 });
@@ -1117,7 +1117,11 @@ async function handleTokens(message) {
       .setColor(0xFF0000)
       .setTitle(`${titleEmoji} Tokens de ${message.author.username}`)
       .setDescription('No tienes ningún Token aún.\n\nObtén Tokens al conseguir premios duplicados en el gacha.')
-      .setThumbnail(message.author.displayAvatarURL({ dynamic: true }));
+      .setThumbnail(message.author.displayAvatarURL({ dynamic: true }))
+      .setAuthor({
+        name: message.author.username,
+        iconURL: message.author.displayAvatarURL({ dynamic: true })
+      });
     return message.channel.send({ embeds: [embed] });
   }
 
@@ -1125,7 +1129,11 @@ async function handleTokens(message) {
     .setColor(0x5865F2)
     .setTitle(`${titleEmoji} Tokens de ${message.author.username}`)
     .setDescription('Aquí están tus Tokens acumulados:')
-    .setThumbnail(message.author.displayAvatarURL({ dynamic: true }));
+    .setThumbnail(message.author.displayAvatarURL({ dynamic: true }))
+    .setAuthor({
+      name: message.author.username,
+      iconURL: message.author.displayAvatarURL({ dynamic: true })
+    });
 
   const rarityOrder = ['Token SSR', 'Token SR', 'Token UR', 'Token R'];
 
@@ -1376,7 +1384,7 @@ async function handleHelp(message) {
 }
 
 async function handleFixHelp(message) {
-  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
+  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando. Usa `*help` para ver los comandos disponibles.');
   }
 
