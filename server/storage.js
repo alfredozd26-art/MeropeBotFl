@@ -358,10 +358,10 @@ function getRarityColor(rarity) {
 
 function getRarityStars(rarity) {
   const stars = {
-    'SSR': '⭐⭐⭐⭐⭐',
-    'SR': '⭐⭐⭐⭐',
-    'UR': '⭐⭐⭐',
-    'R': '⭐⭐'
+    'SSR': '<:RStarR:1425259849477918837><:RStar:1425259703981703208><:RStarR:1425259849477918837><:RStar:1425259703981703208><:RStarR:1425259849477918837>',
+    'SR': '<:RStarR:1425259849477918837><:RStar:1425259703981703208><:RStarR:1425259849477918837><:RStar:1425259703981703208>',
+    'UR': '<:RStarR:1425259849477918837><:RStar:1425259703981703208><:RStarR:1425259849477918837>',
+    'R': '<:RStarR:1425259849477918837><:RStar:1425259703981703208>'
   };
   return stars[rarity.toUpperCase()] || '⭐';
 }
