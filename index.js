@@ -760,7 +760,7 @@ async function handleEditItem(message, args) {
   if (!guildId) return;
 
   const allItems = await storage.getAllItems(guildId);
-  const item = searchItemByPartialNameSync(allItems, itemName);
+  const item = await searchItemByPartialName(allItems, itemName);
 
   if (!item) {
     return message.channel.send(`❌ No se encontró el premio **${itemName}**.`);
@@ -852,6 +852,15 @@ async function handleEditItem(message, args) {
     }
 
     await storage.updateItem(guildId, item.name, 'collectable', amount);
+    
+    // Si se desactiva collectable (amount = 0), eliminar replycollectables
+    if (amount === 0) {
+      await storage.updateItem(guildId, item.name, 'replyCollectable1', null);
+      await storage.updateItem(guildId, item.name, 'replyCollectable2', null);
+      await storage.updateItem(guildId, item.name, 'replyCollectable3', null);
+      return message.channel.send(`✅ El premio **${item.name}** ya no es coleccionable. Se eliminaron los replies coleccionables.`);
+    }
+    
     return message.channel.send(`✅ El premio **${item.name}** ahora requiere **${amount}** copias para completarse.`);
 
   } else if (field === 'name' || field === 'nombre') {
@@ -869,16 +878,25 @@ async function handleEditItem(message, args) {
     return message.channel.send(`✅ El premio **${item.name}** ha sido renombrado a **${newName}**.`);
 
   } else if (field === 'replycollectable1') {
+    if (!item.collectable || item.collectable === 0) {
+      return message.channel.send(`❌ El premio **${item.name}** no es coleccionable. Usa \`*edititem ${item.name} collectable <cantidad>\` primero para activar el modo coleccionable.`);
+    }
     const reply = valueArgs.join(' ');
     await storage.updateItem(guildId, item.name, 'replyCollectable1', reply || null);
     return message.channel.send(`✅ Reply coleccionable 1 del premio **${item.name}** actualizado.`);
 
   } else if (field === 'replycollectable2') {
+    if (!item.collectable || item.collectable === 0) {
+      return message.channel.send(`❌ El premio **${item.name}** no es coleccionable. Usa \`*edititem ${item.name} collectable <cantidad>\` primero para activar el modo coleccionable.`);
+    }
     const reply = valueArgs.join(' ');
     await storage.updateItem(guildId, item.name, 'replyCollectable2', reply || null);
     return message.channel.send(`✅ Reply coleccionable 2 del premio **${item.name}** actualizado.`);
 
   } else if (field === 'replycollectable3') {
+    if (!item.collectable || item.collectable === 0) {
+      return message.channel.send(`❌ El premio **${item.name}** no es coleccionable. Usa \`*edititem ${item.name} collectable <cantidad>\` primero para activar el modo coleccionable.`);
+    }
     const reply = valueArgs.join(' ');
     await storage.updateItem(guildId, item.name, 'replyCollectable3', reply || null);
     return message.channel.send(`✅ Reply coleccionable 3 del premio **${item.name}** actualizado.`);
