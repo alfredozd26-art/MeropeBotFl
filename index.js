@@ -27,7 +27,7 @@ client.on('clientReady', async () => {
   const commands = [
     new SlashCommandBuilder()
       .setName('oye')
-      .setDescription('¡Oye!')
+      .setDescription('Oye')
       .toJSON()
   ];
 
@@ -50,7 +50,7 @@ client.on('interactionCreate', async (interaction) => {
 
   if (interaction.commandName === 'oye') {
     await interaction.reply({
-      content: 'https://cdn.discord.gg/attachments/1160511107102953475/1427795523066138664/attachment.gif'
+      content: 'https://tenor.com/view/bokunorhythem-otama-oyecomova-gif-23829255'
     });
   }
 });
@@ -1116,14 +1116,16 @@ async function handleTokens(message) {
     const embed = new EmbedBuilder()
       .setColor(0xFF0000)
       .setTitle(`${titleEmoji} Tokens de ${message.author.username}`)
-      .setDescription('No tienes ningún Token aún.\n\nObtén Tokens al conseguir premios duplicados en el gacha.');
+      .setDescription('No tienes ningún Token aún.\n\nObtén Tokens al conseguir premios duplicados en el gacha.')
+      .setThumbnail(message.author.displayAvatarURL({ dynamic: true }));
     return message.channel.send({ embeds: [embed] });
   }
 
   const embed = new EmbedBuilder()
     .setColor(0x5865F2)
     .setTitle(`${titleEmoji} Tokens de ${message.author.username}`)
-    .setDescription('Aquí están tus Tokens acumulados:');
+    .setDescription('Aquí están tus Tokens acumulados:')
+    .setThumbnail(message.author.displayAvatarURL({ dynamic: true }));
 
   const rarityOrder = ['Token SSR', 'Token SR', 'Token UR', 'Token R'];
 
