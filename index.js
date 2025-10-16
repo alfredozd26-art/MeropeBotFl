@@ -20,7 +20,7 @@ const DEFAULT_PULL_TIMER = 11500;
 
 const pendingConfirmations = new Map();
 
-client.on('ready', async () => {
+client.on('clientReady', async () => {
   console.log(`✅ Bot conectado como ${client.user.tag}`);
   await storage.ensureDataFiles();
 
