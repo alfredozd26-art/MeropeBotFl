@@ -1,0 +1,24 @@
+{
+  "name": "discord-gacha-bot",
+  "version": "1.0.0",
+  "description": "Bot de Discord tipo gacha con sistema de tiradas, roles y tokens",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "gacha",
+    "game"
+  ],
+  "author": "Gina",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.23.2",
+    "dotenv": "^16.6.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
