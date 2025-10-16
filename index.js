@@ -98,6 +98,8 @@ client.on('messageCreate', async (message) => {
       await handleEditPullSSR(message, args);
     } else if (command === 'editpulltimer') {
       await handleEditPullTimer(message, args);
+    } else if (command === 'help') {
+      await handleHelp(message);
     } else if (command === 'fixhelp') {
       await handleFixHelp(message);
     } else if (command === 'editexchange') {
@@ -1273,7 +1275,40 @@ async function handleEditPullTimer(message, args) {
   await message.reply({ embeds: [embed] });
 }
 
+async function handleHelp(message) {
+  const embed = new EmbedBuilder()
+    .setColor(0x5865F2)
+    .setTitle('<:dogsuke:1425324917854834708> Comandos del Gacha Bot <:dogsuke:1425324917854834708>')
+    .setDescription('Aquí están los comandos que puedes usar:')
+    .addFields(
+      {
+        name: '🎰 Comandos de Juego',
+        value: '**`*spin`** - Hacer un spin del gacha (requiere Ticket)\n**`*spin10`** - Hacer 10 spins del gacha (requiere Ticket x10)\n**`*banner`** - Ver el banner actual con probabilidades\n**`*pity`** - Ver tu contador de pity actual',
+        inline: false
+      },
+      {
+        name: '🎒 Comandos de Inventario',
+        value: '**`*tokens`** o **`*bal`** - Ver tus Tokens acumulados\n**`*inventory`** - Ver tus premios y objetos coleccionables\n**`*canjear <ID>`** - Canjear Tokens por recompensas\n**`*listexchanges`** - Ver canjes disponibles',
+        inline: false
+      },
+      {
+        name: 'ℹ️ Sistema de Rarezas',
+        value: '<:SSRTK:1425246335472369857> - Super Super Raro (5★)\n<:SRTK:1425246269307359395> - Super Raro (4★)\n<:URTK:1425246198071033906> - Ultra Raro (3★)\n<:RTK:1425246396654682272> - Raro (2★)\n\n⭐ = Personaje Promocional (Banner)',
+        inline: false
+      }
+    )
+    .setFooter({ text: 'Usa *help para ver este menú en cualquier momento' });
+
+  if (message.channel.isSendable()) {
+    await message.channel.send({ embeds: [embed] });
+  }
+}
+
 async function handleFixHelp(message) {
+  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+    return message.reply('❌ Solo administradores pueden usar este comando. Usa `*help` para ver los comandos disponibles.');
+  }
+
   const embed = new EmbedBuilder()
     .setColor(0x5865F2)
     .setTitle('<:dogsuke:1425324917854834708> Comandos del Gacha Bot <:dogsuke:1425324917854834708>')
