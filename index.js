@@ -1286,7 +1286,7 @@ async function handleFixHelp(message) {
       },
       {
         name: '🎒 Comandos de Inventario',
-        value: '**`*tokens`** o **`*bal`** - Ver tus Tokens acumulados\n**`*inventory`** - Ver tus personas y objetos coleccionables\n**`*canjear <ID>`** - Canjear Tokens por recompensas\n**`*listexchanges`** - Ver canjes disponibles',
+        value: '**`*tokens`** o **`*bal`** - Ver tus Tokens acumulados\n**`*inventory`** - Ver tus premios y objetos coleccionables\n**`*canjear <ID>`** - Canjear Tokens por recompensas\n**`*listexchanges`** - Ver canjes disponibles',
         inline: false
       },
       {
@@ -1311,7 +1311,7 @@ async function handleFixHelp(message) {
       },
       {
         name: 'ℹ️ Sistema de Rarezas',
-        value: 'SSR <:SSRTK:1425246335472369857> - Super Super Raro (5★)\nSR <:SRTK:1425246269307359395> - Super Raro (4★)\nUR <:URTK:1425246198071033906> - Ultra Raro (3★)\nR <:RTK:1425246396654682272> - Raro (2★)\n\n⭐ = Personaje Promocional (Banner)',
+        value: '<:SSRTK:1425246335472369857> - Super Super Raro (5★)\n<:SRTK:1425246269307359395> - Super Raro (4★)\n<:URTK:1425246198071033906> - Ultra Raro (3★)\n<:RTK:1425246396654682272> - Raro (2★)\n\n⭐ = Personaje Promocional (Banner)',
         inline: false
       }
     )
