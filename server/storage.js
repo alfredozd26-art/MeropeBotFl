@@ -99,6 +99,32 @@ async function updateItem(guildId, name, field, value) {
   return true;
 }
 
+async function renameItem(guildId, oldName, newName) {
+  const filePath = getFilePath(guildId, 'items');
+  const data = await readJSON(filePath, { items: [] });
+  
+  if (!data.items) return false;
+  
+  const item = data.items.find(i => i.name.toLowerCase() === oldName.toLowerCase());
+  if (!item) return false;
+  
+  const collectablesPath = getFilePath(guildId, 'collectables');
+  const collectablesData = await readJSON(collectablesPath, {});
+  
+  for (const userId in collectablesData) {
+    if (collectablesData[userId][oldName]) {
+      collectablesData[userId][newName] = collectablesData[userId][oldName];
+      delete collectablesData[userId][oldName];
+    }
+  }
+  
+  await writeJSON(collectablesPath, collectablesData);
+  
+  item.name = newName;
+  await writeJSON(filePath, data);
+  return true;
+}
+
 async function getConfig(guildId, key) {
   const filePath = getFilePath(guildId, 'config');
   const config = await readJSON(filePath, {});
@@ -397,6 +423,7 @@ module.exports = {
   deleteItem,
   resetAllItems,
   updateItem,
+  renameItem,
   getConfig,
   setConfig,
   getRandomItemWithPity,

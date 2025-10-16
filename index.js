@@ -207,10 +207,22 @@ async function handleGirar(message) {
   }
 
   const isDuplicate = hasRoleGiven;
-  const embedColor = storage.getRarityColor(item.rarity);
+  const embedColor = item.secret ? 0x8B0000 : storage.getRarityColor(item.rarity);
   const objectType = item.objectType || 'personaje';
 
-  const isUrl = item.reply.match(/^https?:\/\/.+\.(gif|png|jpg|jpeg|webp)(\?.*)?$/i);
+  const collectables = await storage.getUserCollectables(guildId, message.author.id);
+  const currentCount = collectables[item.name] || 0;
+  const isCollectable = item.collectable && item.collectable > 0;
+
+  let replyToUse = item.reply;
+  if (isCollectable && (item.replyCollectable1 || item.replyCollectable2 || item.replyCollectable3)) {
+    const collectableReplies = [item.replyCollectable1, item.replyCollectable2, item.replyCollectable3].filter(r => r);
+    if (collectableReplies.length > 0) {
+      replyToUse = collectableReplies[Math.floor(Math.random() * collectableReplies.length)];
+    }
+  }
+
+  const isUrl = replyToUse?.match(/^https?:\/\/.+\.(gif|png|jpg|jpeg|webp)(\?.*)?$/i);
 
   if ((isDuplicate && item.giveTokens) || (objectType === 'persona' && item.giveTokens)) {
     const tokenEmoji = await storage.getTokenEmoji(item.rarity);
@@ -230,7 +242,7 @@ async function handleGirar(message) {
       .setFooter({ text: `Ya tenías este ${objectType}, recibiste Tokens` });
 
     if (isUrl) {
-      embed.setImage(item.reply);
+      embed.setImage(replyToUse);
     }
 
     await message.reply({ embeds: [embed] });
@@ -239,42 +251,60 @@ async function handleGirar(message) {
 
     const embed = new EmbedBuilder()
       .setColor(embedColor)
-      .setTitle(`🎉 ¡Nuevo ${objectType.charAt(0).toUpperCase() + objectType.slice(1)} Obtenido!`)
+      .setTitle(item.secret ? `🔒 ¡${objectType.charAt(0).toUpperCase() + objectType.slice(1)} Secreto Obtenido!` : `🎉 ¡Nuevo ${objectType.charAt(0).toUpperCase() + objectType.slice(1)} Obtenido!`)
       .addFields(
         { name: objectType.charAt(0).toUpperCase() + objectType.slice(1), value: item.name, inline: true },
         { name: 'Rareza', value: rarityStars, inline: true }
-      )
-      .setFooter({ text: `¡Felicidades por tu nuevo ${objectType}!` });
+      );
+
+    if (item.secret) {
+      embed.setDescription('🔒 ¡Has conseguido un personaje secreto!');
+    }
+
+    if (isCollectable) {
+      const remaining = item.collectable - currentCount;
+      embed.addFields({ name: '📦 Coleccionable', value: `${currentCount}/${item.collectable} (Faltan ${remaining})`, inline: false });
+      
+      if (currentCount >= item.collectable && item.roleGiven) {
+        embed.addFields({ name: '✅ Completado', value: `Rol asignado: ${item.roleGiven}`, inline: false });
+      }
+    }
+
+    embed.setFooter({ text: item.secret ? '¡Has desbloqueado un secreto!' : `¡Felicidades por tu nuevo ${objectType}!` });
 
     if (isUrl) {
-      embed.setImage(item.reply);
+      embed.setImage(replyToUse);
     }
 
     await message.reply({ embeds: [embed] });
 
     if (item.roleGiven) {
-      let roleToGive = message.guild?.roles.cache.find((r) => r.name === item.roleGiven);
+      const shouldGiveRole = !isCollectable || currentCount >= item.collectable;
+      
+      if (shouldGiveRole) {
+        let roleToGive = message.guild?.roles.cache.find((r) => r.name === item.roleGiven);
 
-      if (!roleToGive) {
-        const roleMentionMatch = item.roleGiven?.match(/<@&(\d+)>/);
-        if (roleMentionMatch) {
-          roleToGive = message.guild?.roles.cache.get(roleMentionMatch[1]);
+        if (!roleToGive) {
+          const roleMentionMatch = item.roleGiven?.match(/<@&(\d+)>/);
+          if (roleMentionMatch) {
+            roleToGive = message.guild?.roles.cache.get(roleMentionMatch[1]);
+          }
         }
-      }
 
-      if (!roleToGive && item.roleGiven) {
-        roleToGive = message.guild?.roles.cache.get(item.roleGiven);
-      }
-
-      if (roleToGive) {
-        try {
-          await member.roles.add(roleToGive);
-          console.log(`✅ Rol "${roleToGive.name}" asignado exitosamente a ${message.author.tag}`);
-        } catch (error) {
-          console.error(`❌ Error al asignar rol "${roleToGive.name}":`, error.message);
+        if (!roleToGive && item.roleGiven) {
+          roleToGive = message.guild?.roles.cache.get(item.roleGiven);
         }
-      } else {
-        console.log(`⚠️ No se encontró el rol "${item.roleGiven}" en el servidor`);
+
+        if (roleToGive) {
+          try {
+            await member.roles.add(roleToGive);
+            console.log(`✅ Rol "${roleToGive.name}" asignado exitosamente a ${message.author.tag}`);
+          } catch (error) {
+            console.error(`❌ Error al asignar rol "${roleToGive.name}":`, error.message);
+          }
+        } else {
+          console.log(`⚠️ No se encontró el rol "${item.roleGiven}" en el servidor`);
+        }
       }
     }
   }
@@ -826,8 +856,37 @@ async function handleEditItem(message, args) {
     await storage.updateItem(guildId, item.name, 'collectable', amount);
     return message.channel.send(`✅ El premio **${item.name}** ahora requiere **${amount}** copias para completarse.`);
 
+  } else if (field === 'name' || field === 'nombre') {
+    const newName = valueArgs.join(' ');
+    if (!newName) {
+      return message.channel.send('❌ Debes proporcionar un nuevo nombre.');
+    }
+
+    const existingItem = await storage.getItemByName(guildId, newName);
+    if (existingItem && existingItem.name !== item.name) {
+      return message.channel.send(`❌ Ya existe un premio con el nombre **${newName}**.`);
+    }
+
+    await storage.renameItem(guildId, item.name, newName);
+    return message.channel.send(`✅ El premio **${item.name}** ha sido renombrado a **${newName}**.`);
+
+  } else if (field === 'replycollectable1') {
+    const reply = valueArgs.join(' ');
+    await storage.updateItem(guildId, item.name, 'replyCollectable1', reply || null);
+    return message.channel.send(`✅ Reply coleccionable 1 del premio **${item.name}** actualizado.`);
+
+  } else if (field === 'replycollectable2') {
+    const reply = valueArgs.join(' ');
+    await storage.updateItem(guildId, item.name, 'replyCollectable2', reply || null);
+    return message.channel.send(`✅ Reply coleccionable 2 del premio **${item.name}** actualizado.`);
+
+  } else if (field === 'replycollectable3') {
+    const reply = valueArgs.join(' ');
+    await storage.updateItem(guildId, item.name, 'replyCollectable3', reply || null);
+    return message.channel.send(`✅ Reply coleccionable 3 del premio **${item.name}** actualizado.`);
+
   } else {
-    return message.channel.send('❌ Campo inválido. Usa: chance, rarity, reply, tokens, role-given, object, promo, secret, collectable');
+    return message.channel.send('❌ Campo inválido. Usa: chance, rarity, reply, tokens, role-given, object, promo, secret, collectable, name, replycollectable1, replycollectable2, replycollectable3');
   }
 }
 
@@ -940,6 +999,22 @@ async function handleItemInfo(message, args) {
 
   if (item.collectable && item.collectable > 0) {
     embed.addFields({ name: 'Coleccionable', value: `Requiere ${item.collectable} copias`, inline: false });
+    
+    if (item.replyCollectable1 || item.replyCollectable2 || item.replyCollectable3) {
+      const collectableReplies = [];
+      if (item.replyCollectable1) collectableReplies.push('Reply 1 configurado');
+      if (item.replyCollectable2) collectableReplies.push('Reply 2 configurado');
+      if (item.replyCollectable3) collectableReplies.push('Reply 3 configurado');
+      embed.addFields({ name: 'Replies Coleccionables', value: collectableReplies.join('\n'), inline: false });
+    }
+  } else {
+    if (item.replyCollectable1 || item.replyCollectable2 || item.replyCollectable3) {
+      embed.addFields({ 
+        name: '⚠️ Replies Coleccionables', 
+        value: 'Este item tiene replies coleccionables configurados pero no es coleccionable.\nUsa `*edititem ' + item.name + ' collectable <cantidad>` para activarlo.', 
+        inline: false 
+      });
+    }
   }
 
   if (item.reply) {
@@ -1326,7 +1401,7 @@ async function handleFixHelp(message) {
       },
       {
         name: '⚙️ Comandos de Administración - Items',
-        value: '**`*createitem <nombre>`** - Crear un nuevo premio\nEjemplo: `*createitem Joker Premium`\n\n**`*createitemsecret <nombre>`** - Crear personaje secreto 🔒\nEjemplo: `*createitemsecret Johnny`\n*No aparece en el banner público*\n\n**`*edititem <nombre> <campo> <valor>`** - Editar premio\n  - Campos: `chance`, `rarity`, `reply`, `tokens`, `role-given`, `object`, `promo`, `secret`\n  - Ejemplos:\n    - `*edititem Joker rarity SSR`\n    - `*edititem Joker chance 5`\n    - `*edititem Joker reply https://imagen.gif`\n    - `*edititem Joker tokens si`\n    - `*edititem Joker role-given @NombreRol`\n    - `*edititem Joker promo true`\n    - `*edititem Joker secret true` (lo hace secreto 🔒)\n    - `*edititem "Cuerpo Santo" collectable 5` (necesita 5 copias para el rol)\n\n**`*deleteitem <nombre>`** - Eliminar un premio (requiere confirmación)\n**`*resetitems`** - Eliminar todos los premios (requiere confirmación)\n**`*iteminfo <nombre>`** - Ver información de un premio\n**`*secretbanner`** - Ver solo personajes secretos (admin) 🔒',
+        value: '**`*createitem <nombre>`** - Crear un nuevo premio\nEjemplo: `*createitem Joker Premium`\n\n**`*createitemsecret <nombre>`** - Crear personaje secreto 🔒\nEjemplo: `*createitemsecret Johnny`\n*No aparece en el banner público*\n\n**`*edititem <nombre> <campo> <valor>`** - Editar premio\n  - Campos: `chance`, `rarity`, `reply`, `tokens`, `role-given`, `object`, `promo`, `secret`\n  - Ejemplos:\n    - `*edititem Joker rarity SSR`\n    - `*edititem Joker chance 5`\n    - `*edititem Joker reply https://imagen.gif`\n    - `*edititem Joker tokens si`\n    - `*edititem Joker role-given @NombreRol`\n    - `*edititem Joker promo true`\n    - `*edititem Joker secret true` (lo hace secreto 🔒)\n    - `*edititem "Cuerpo Santo" collectable 5` (necesita 5 copias para el rol)\n    - `*edititem Joker name "Nuevo Nombre"` (renombrar item)\n    - `*edititem Joker replycollectable1 <url>` (reply 1 para coleccionables)\n    - `*edititem Joker replycollectable2 <url>` (reply 2 para coleccionables)\n    - `*edititem Joker replycollectable3 <url>` (reply 3 para coleccionables)\n\n**`*deleteitem <nombre>`** - Eliminar un premio (requiere confirmación)\n**`*resetitems`** - Eliminar todos los premios (requiere confirmación)\n**`*iteminfo <nombre>`** - Ver información de un premio\n**`*secretbanner`** - Ver solo personajes secretos (admin) 🔒',
         inline: false
       },
       {
