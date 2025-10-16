@@ -170,7 +170,7 @@ async function handleGirar(message) {
 
   if (gifToShow) {
     const pullTimer = await storage.getConfig(guildId, 'pull_timer') || DEFAULT_PULL_TIMER;
-    
+
     const loadingEmbed = new EmbedBuilder()
       .setColor(0xFFD700)
       .setTitle('🌟 Realizando tirada...')
@@ -262,7 +262,7 @@ async function handleGirar(message) {
     if (isCollectable) {
       const remaining = item.collectable - currentCount;
       embed.addFields({ name: '📦 Coleccionable', value: `${currentCount}/${item.collectable} (Faltan ${remaining})`, inline: false });
-      
+
       if (currentCount >= item.collectable && item.roleGiven) {
         embed.addFields({ name: '✅ Completado', value: `Rol asignado: ${item.roleGiven}`, inline: false });
       }
@@ -278,7 +278,7 @@ async function handleGirar(message) {
 
     if (item.roleGiven) {
       const shouldGiveRole = !isCollectable || currentCount >= item.collectable;
-      
+
       if (shouldGiveRole) {
         let roleToGive = message.guild?.roles.cache.find((r) => r.name === item.roleGiven);
 
@@ -427,7 +427,7 @@ async function handleGirar10(message) {
 
   if (gifToShow) {
     const pullTimer = await storage.getConfig(guildId, 'pull_timer') || DEFAULT_PULL_TIMER;
-    
+
     const loadingEmbed = new EmbedBuilder()
       .setColor(0xFFD700)
       .setTitle('🌟 Realizando 10 tiradas...')
@@ -746,7 +746,7 @@ async function handleEditItem(message, args) {
     if (endQuoteIndex === -1) {
       return message.channel.send('❌ Falta comillas de cierre en el nombre del item.');
     }
-    
+
     itemName = args.slice(0, endQuoteIndex + 1).join(' ').replace(/^"|"$/g, '');
     field = args[endQuoteIndex + 1]?.toLowerCase();
     valueArgs = args.slice(endQuoteIndex + 2);
@@ -784,7 +784,7 @@ async function handleEditItem(message, args) {
     }
 
     await storage.updateItem(guildId, item.name, 'rarity', rarity);
-    
+
     const embed = new EmbedBuilder()
       .setColor(storage.getRarityColor(rarity))
       .setTitle('✅ Rareza Actualizada')
@@ -852,7 +852,7 @@ async function handleEditItem(message, args) {
     }
 
     await storage.updateItem(guildId, item.name, 'collectable', amount);
-    
+
     // Si se desactiva collectable (amount = 0), eliminar replycollectables
     if (amount === 0) {
       await storage.updateItem(guildId, item.name, 'replyCollectable1', null);
@@ -860,7 +860,7 @@ async function handleEditItem(message, args) {
       await storage.updateItem(guildId, item.name, 'replyCollectable3', null);
       return message.channel.send(`✅ El premio **${item.name}** ya no es coleccionable. Se eliminaron los replies coleccionables.`);
     }
-    
+
     return message.channel.send(`✅ El premio **${item.name}** ahora requiere **${amount}** copias para completarse.`);
 
   } else if (field === 'name' || field === 'nombre') {
@@ -1015,7 +1015,7 @@ async function handleItemInfo(message, args) {
 
   if (item.collectable && item.collectable > 0) {
     embed.addFields({ name: 'Coleccionable', value: `Requiere ${item.collectable} copias`, inline: false });
-    
+
     if (item.replyCollectable1 || item.replyCollectable2 || item.replyCollectable3) {
       const collectableReplies = [];
       if (item.replyCollectable1) collectableReplies.push('Reply 1 configurado');
@@ -1025,10 +1025,10 @@ async function handleItemInfo(message, args) {
     }
   } else {
     if (item.replyCollectable1 || item.replyCollectable2 || item.replyCollectable3) {
-      embed.addFields({ 
-        name: '⚠️ Replies Coleccionables', 
-        value: 'Este item tiene replies coleccionables configurados pero no es coleccionable.\nUsa `*edititem ' + item.name + ' collectable <cantidad>` para activarlo.', 
-        inline: false 
+      embed.addFields({
+        name: '⚠️ Replies Coleccionables',
+        value: 'Este item tiene replies coleccionables configurados pero no es coleccionable.\nUsa `*edititem ' + item.name + ' collectable <cantidad>` para activarlo.',
+        inline: false
       });
     }
   }
@@ -1134,12 +1134,8 @@ async function handleTokens(message) {
     const embed = new EmbedBuilder()
       .setColor(0xFF0000)
       .setTitle(`${titleEmoji} Tokens de ${message.author.username}`)
-      .setDescription('No tienes ningún Token aún.\n\nObtén Tokens al conseguir premios duplicados en el gacha.')
-      .setThumbnail(message.author.displayAvatarURL({ dynamic: true }))
-      .setAuthor({
-        name: message.author.username,
-        iconURL: message.author.displayAvatarURL({ dynamic: true })
-      });
+      .setDescription('No tienes ningún Token aún.\n\nObtén Tokens al conseguir premios duplicados en el gacha.');
+    // .setThumbnail(message.author.displayAvatarURL({ dynamic: true })) // Removed thumbnail
     return message.channel.send({ embeds: [embed] });
   }
 
@@ -1354,7 +1350,7 @@ async function handleEditPullTimer(message, args) {
   }
 
   const timer = parseInt(args[0]);
-  
+
   if (isNaN(timer) || timer < 1000 || timer > 60000) {
     return message.reply('❌ El timer debe ser un número entre 1000 y 60000 milisegundos (1-60 segundos).\n\nEjemplo: `*editpulltimer 5000` para 5 segundos');
   }
@@ -1385,7 +1381,7 @@ async function handleHelp(message) {
       },
       {
         name: '🎒 Comandos de Inventario',
-        value: '**`*tokens`** o **`*bal`** - Ver tus Tokens acumulados\n**`*inventory`** - Ver tus premios y objetos coleccionables\n**`*canjear <ID>`** - Canjear Tokens por recompensas\n**`*listexchanges`** - Ver canjes disponibles',
+        value: '**`*tokens`** - Ver tus Tokens acumulados\n**`*inventory`** - Ver tus premios y objetos coleccionables\n**`*canjear <ID>`** - Canjear Tokens por recompensas\n**`*listexchanges`** - Ver canjes disponibles',
         inline: false
       },
       {
@@ -1418,7 +1414,7 @@ async function handleFixHelp(message) {
       },
       {
         name: '🎒 Comandos de Inventario',
-        value: '**`*tokens`** o **`*bal`** - Ver tus Tokens acumulados\n**`*inventory`** - Ver tus premios y objetos coleccionables\n**`*canjear <ID>`** - Canjear Tokens por recompensas\n**`*listexchanges`** - Ver canjes disponibles',
+        value: '**`*tokens`** - Ver tus Tokens acumulados\n**`*inventory`** - Ver tus premios y objetos coleccionables\n**`*canjear <ID>`** - Canjear Tokens por recompensas\n**`*listexchanges`** - Ver canjes disponibles',
         inline: false
       },
       {
@@ -1845,11 +1841,11 @@ async function handleInventory(message) {
     const count = collectables[item.name] || 0;
     const objectType = (item.objectType || 'personaje').toLowerCase();
     const rarityStars = storage.getRarityStars(item.rarity);
-    
+
     if (count > 0) {
       hasAnyItem = true;
       let statusText = `**Cantidad:** ${count}`;
-      
+
       if (item.collectable && item.collectable > 0) {
         statusText += ` / ${item.collectable}`;
         if (count >= item.collectable) {
