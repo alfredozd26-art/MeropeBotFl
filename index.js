@@ -1404,8 +1404,23 @@ async function handleFixHelp(message) {
         inline: false
       },
       {
-        name: '⚙️ Comandos de Administración - Items',
-        value: '**`*createitem <nombre>`** - Crear un nuevo premio\nEjemplo: `*createitem Joker Premium`\n\n**`*createitemsecret <nombre>`** - Crear personaje secreto 🔒\nEjemplo: `*createitemsecret Johnny`\n*No aparece en el banner público*\n\n**`*edititem <nombre> <campo> <valor>`** - Editar premio\n  - Campos: `chance`, `rarity`, `reply`, `tokens`, `role-given`, `object`, `promo`, `secret`\n  - Ejemplos:\n    - `*edititem Joker rarity SSR`\n    - `*edititem Joker chance 5`\n    - `*edititem Joker reply https://imagen.gif`\n    - `*edititem Joker tokens si`\n    - `*edititem Joker role-given @NombreRol`\n    - `*edititem Joker promo true`\n    - `*edititem Joker secret true` (lo hace secreto 🔒)\n    - `*edititem "Cuerpo Santo" collectable 5` (necesita 5 copias para el rol)\n    - `*edititem Joker name "Nuevo Nombre"` (renombrar item)\n    - `*edititem Joker replycollectable1 <url>` (reply 1 para coleccionables)\n    - `*edititem Joker replycollectable2 <url>` (reply 2 para coleccionables)\n    - `*edititem Joker replycollectable3 <url>` (reply 3 para coleccionables)\n\n**`*deleteitem <nombre>`** - Eliminar un premio (requiere confirmación)\n**`*resetitems`** - Eliminar todos los premios (requiere confirmación)\n**`*iteminfo <nombre>`** - Ver información de un premio\n**`*secretbanner`** - Ver solo personajes secretos (admin) 🔒',
+        name: '⚙️ Comandos Admin - Crear Items',
+        value: '**`*createitem <nombre>`** - Crear premio\n**`*createitemsecret <nombre>`** - Crear secreto 🔒\n**`*deleteitem <nombre>`** - Eliminar premio\n**`*resetitems`** - Eliminar todos\n**`*iteminfo <nombre>`** - Ver info\n**`*secretbanner`** - Ver secretos 🔒',
+        inline: false
+      },
+      {
+        name: '⚙️ Comandos Admin - Editar Items (Parte 1)',
+        value: '**`*edititem <nombre> <campo> <valor>`**\n\n**Campos básicos:**\n`*edititem Joker rarity SSR`\n`*edititem Joker chance 5`\n`*edititem Joker reply https://imagen.gif`\n`*edititem Joker tokens si`\n`*edititem Joker role-given @Rol`',
+        inline: false
+      },
+      {
+        name: '⚙️ Comandos Admin - Editar Items (Parte 2)',
+        value: '**Campos avanzados:**\n`*edititem Joker promo true`\n`*edititem Joker secret true` 🔒\n`*edititem Joker collectable 5`\n`*edititem Joker name "Nuevo Nombre"`\n`*edititem Joker object persona`',
+        inline: false
+      },
+      {
+        name: '⚙️ Comandos Admin - Replies Coleccionables',
+        value: '**Configurar replies aleatorios:**\n`*edititem Joker replycollectable1 <url>`\n`*edititem Joker replycollectable2 <url>`\n`*edititem Joker replycollectable3 <url>`',
         inline: false
       },
       {
