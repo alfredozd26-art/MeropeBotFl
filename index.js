@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, EmbedBuilder, PermissionFlagsBits, REST, Routes, SlashCommandBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, REST, Routes, SlashCommandBuilder } = require('discord.js');
 const dotenv = require('dotenv');
 const storage = require('./server/storage');
 const { searchItemByPartialName, searchItemByPartialNameSync } = require('./utils/itemSearch');
@@ -90,8 +90,6 @@ client.on('messageCreate', async (message) => {
       await handleSetTicketRole(message, args);
     } else if (command === 'setticketrole10') {
       await handleSetTicketRole10(message, args);
-    } else if (command === 'bal') {
-      await handleBalance(message);
     } else if (command === 'editpull') {
       await handleEditPull(message, args);
     } else if (command === 'editpullssr') {
@@ -583,7 +581,7 @@ async function handleBanner(message) {
 }
 
 async function handleCreateItem(message, args) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -614,7 +612,7 @@ async function handleCreateItem(message, args) {
 }
 
 async function handleCreateItemSecret(message, args) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -647,7 +645,7 @@ async function handleCreateItemSecret(message, args) {
 }
 
 async function handleSecretBanner(message) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -729,7 +727,7 @@ async function handleSecretBanner(message) {
 }
 
 async function handleEditItem(message, args) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -891,7 +889,7 @@ async function handleEditItem(message, args) {
 }
 
 async function handleDeleteItem(message, args) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -936,7 +934,7 @@ async function handleDeleteItem(message, args) {
 }
 
 async function handleResetItems(message) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -1117,14 +1115,14 @@ async function handleTokens(message) {
   if (Object.keys(tokens).length === 0) {
     const embed = new EmbedBuilder()
       .setColor(0xFF0000)
-      .setTitle(`${titleEmoji} Tus Tokens`)
+      .setTitle(`${titleEmoji} Tokens de ${message.author.username}`)
       .setDescription('No tienes ningún Token aún.\n\nObtén Tokens al conseguir premios duplicados en el gacha.');
-    return message.reply({ embeds: [embed] });
+    return message.channel.send({ embeds: [embed] });
   }
 
   const embed = new EmbedBuilder()
     .setColor(0x5865F2)
-    .setTitle(`${titleEmoji} Tus Tokens`)
+    .setTitle(`${titleEmoji} Tokens de ${message.author.username}`)
     .setDescription('Aquí están tus Tokens acumulados:');
 
   const rarityOrder = ['Token SSR', 'Token SR', 'Token UR', 'Token R'];
@@ -1141,15 +1139,11 @@ async function handleTokens(message) {
     }
   }
 
-  await message.reply({ embeds: [embed] });
-}
-
-async function handleBalance(message) {
-  return handleTokens(message);
+  await message.channel.send({ embeds: [embed] });
 }
 
 async function handleCreateExchange(message, args) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -1210,7 +1204,7 @@ async function handleListExchanges(message) {
 }
 
 async function handleSetTicketRole(message, args) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -1232,7 +1226,7 @@ async function handleSetTicketRole(message, args) {
 }
 
 async function handleSetTicketRole10(message, args) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -1254,7 +1248,7 @@ async function handleSetTicketRole10(message, args) {
 }
 
 async function handleEditPull(message, args) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -1282,7 +1276,7 @@ async function handleEditPull(message, args) {
 }
 
 async function handleEditPullSSR(message, args) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -1310,7 +1304,7 @@ async function handleEditPullSSR(message, args) {
 }
 
 async function handleEditPullTimer(message, args) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -1380,7 +1374,7 @@ async function handleHelp(message) {
 }
 
 async function handleFixHelp(message) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando. Usa `*help` para ver los comandos disponibles.');
   }
 
@@ -1433,7 +1427,7 @@ async function handleFixHelp(message) {
 }
 
 async function handleResetExchanges(message) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
   const guildId = message.guild?.id;
@@ -1452,7 +1446,7 @@ async function handleResetExchanges(message) {
 }
 
 async function handleEditExchange(message, args) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -1528,7 +1522,7 @@ async function handleEditExchange(message, args) {
 }
 
 async function handleAddTokens(message, args) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -1561,16 +1555,17 @@ async function handleAddTokens(message, args) {
   await storage.addTokens(guildId, userId, tokenType, amount);
 
   const tokenEmoji = await storage.getRarityTokenEmoji(rarity);
+  const user = await message.guild.members.fetch(userId);
   const embed = new EmbedBuilder()
     .setColor(0x00FF00)
     .setTitle('✅ Tokens Añadidos')
-    .setDescription(`Se han añadido **${amount}** ${tokenEmoji} a <@${userId}>.`);
+    .setDescription(`Se han añadido **${amount}** ${tokenEmoji} a ${user.user.username}.`);
 
-  await message.reply({ embeds: [embed] });
+  await message.channel.send({ embeds: [embed] });
 }
 
 async function handleRemoveTokens(message, args) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -1603,21 +1598,22 @@ async function handleRemoveTokens(message, args) {
   const success = await storage.removeTokens(guildId, userId, tokenType, amount);
 
   const tokenEmoji = await storage.getRarityTokenEmoji(rarity);
+  const user = await message.guild.members.fetch(userId);
 
   if (!success) {
-    return message.reply(`❌ <@${userId}> no tiene suficientes ${tokenEmoji} para remover.`);
+    return message.channel.send(`❌ ${user.user.username} no tiene suficientes ${tokenEmoji} para remover.`);
   }
 
   const embed = new EmbedBuilder()
     .setColor(0xFF6B35)
     .setTitle('✅ Tokens Removidos')
-    .setDescription(`Se han removido **${amount}** ${tokenEmoji} de <@${userId}>.`);
+    .setDescription(`Se han removido **${amount}** ${tokenEmoji} de ${user.user.username}.`);
 
-  await message.reply({ embeds: [embed] });
+  await message.channel.send({ embeds: [embed] });
 }
 
 async function handleResetTokens(message) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -1758,7 +1754,7 @@ async function handlePityInfo(message) {
 }
 
 async function handleSetCurrency(message, args) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -1836,7 +1832,7 @@ async function handleInventory(message) {
 }
 
 async function handleResetCollectable(message, args) {
-  if (!message.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply('❌ Solo administradores pueden usar este comando.');
   }
 
@@ -1863,12 +1859,13 @@ async function handleResetCollectable(message, args) {
 
   await storage.resetCollectable(guildId, userId, item.name);
 
+  const user = await message.guild.members.fetch(userId);
   const embed = new EmbedBuilder()
     .setColor(0xFF6B35)
     .setTitle('✅ Coleccionables Reseteados')
-    .setDescription(`Los coleccionables de **${item.name}** han sido reseteados para <@${userId}>.`);
+    .setDescription(`Los coleccionables de **${item.name}** han sido reseteados para ${user.user.username}.`);
 
-  await message.reply({ embeds: [embed] });
+  await message.channel.send({ embeds: [embed] });
 }
 
 const token = process.env.DISCORD_TOKEN;
