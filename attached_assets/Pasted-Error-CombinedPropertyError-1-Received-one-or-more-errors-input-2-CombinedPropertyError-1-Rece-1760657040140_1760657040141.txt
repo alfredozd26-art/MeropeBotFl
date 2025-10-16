@@ -1,0 +1,61 @@
+Error: CombinedPropertyError (1)
+Received one or more errors
+input[2]
+CombinedPropertyError (1)
+Received one or more errors
+input.value
+ExpectedConstraintError › s.string().
+lengthLessThanOrEqual()
+Invalid string length
+Expected: expected.length <= 1024
+Received:
+'****createitem <nombre>'** - Cre
+ar un nuevo premio \nEjemplo: '*createitem Jok er Premium \n\n****createitemsecret ‹nombre>*
+** - Crear personaje secreto AnEjemplo: '*cr eateitemsecret Johnny '\n*No aparece en el ban ner público*\n\n****edititem ‹nombre> ‹campo>
+<valor> ** - Editar premio\n - Campos: 'cha
+nce'
+n', object',
+'tokens', 'role-give
+carity romoy secket In - Ejemplos
+: \n
+'*edititem Joker rarity SSR'\n
+'*edititem Joker chance 5'\n
+- '*edititem
+Joker reply https://imagen.gif'\n
+*edit
+item Joker tokens si '\n
+- '*edititem Joker
+role-given @NombreRol' \n
+ー
+"*edititem Jok
+er promo true '\n
+- '*edititem Joker secret true (10 hace secreto @\n
+- '*edititem
+"Cuerpo Santo" collectable 5' (necesita 5 cop ias para el rol) \n
+- '*edititem Joker name
+"Nuevo Nombre"' (renombrar item) \n
+- '*ed
+ititem Joker replycollectable1 <url>' (reply
+1 para coleccionables) \n
+- '*edititem Joke
+r replycollectable2 ‹url> (reply 2 para cole
+ccionables) \n
+- '*edititem Joker replycoll
+ectable3 ‹url>' (reply 3 para coleccionables)
+\n\n****deleteitem ‹nombre> ** - Eliminar un premio (requiere confirmación) \n** *resetitem s'** - Eliminar todos los premios (requiere c onfirmación) \n****iteminfo ‹nombre> ** - Ver información de un premio\n** '*secretbanner***
+- Ver solo personajes secretos (admin) ®
+at _ArrayValidator.handle (/home/containe
+r/node_modules/@sapphire/shapeshift/dist/cjs/ index.cjs: 1254:70)
+at_ArrayValidator parse (/home/container
+/node_modules/@sapphire/shapeshift/dist/cjs/i
+ndex.cjs: 972:90)
+at EmbedBuilder.addFields (/home/containe
+r/node_modules/@discordjs/builders/dist/index
+•js: 237:31)
+at handleFixHelp (/home/container/index.j
+s: 1395:6)
+at Client.<anonymous> (/home/container/in
+dex.js: 102:13) at Client.emit (node:events: 524:28) at MessageCreateAction.handle (/home/cont ainer/node_modules/discord.js/src/client/acti ons/MessageCreate. js:32:14)
+at module. exports Las MESSAGE_CREATE] (/h ome/container/node_modules/discord.js/src/cli ent/websocket/handlers/MESSAGE_CREATE. js:4:32
+at WebSocketManager.handlePacket (/home/c ontainer/node_modules/discord.js/src/client/w ebsocket/WebSocketManager.js:352:31)
+at WebSocketManager.<anonymous> (/home/co ntainer/node_modules/discord.js/src/client/we bsocket/WebSocketManager. js:236:12)
