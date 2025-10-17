@@ -1139,7 +1139,6 @@ async function handleTokens(message) {
     .setColor(0x5865F2)
     .setTitle(`${titleEmoji} Tokens de ${message.author.username}`)
     .setDescription('Aquí están tus Tokens acumulados:')
-    .setThumbnail(message.author.displayAvatarURL({ dynamic: true }))
     .setAuthor({
       name: message.author.username,
       iconURL: message.author.displayAvatarURL({ dynamic: true })
