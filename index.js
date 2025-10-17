@@ -29,30 +29,52 @@ client.on('clientReady', async () => {
     new SlashCommandBuilder()
       .setName('oye')
       .setDescription('Oye')
+      .toJSON(),
+    new SlashCommandBuilder()
+      .setName('spin')
+      .setDescription('🎰 Realizar una tirada del gacha')
+      .toJSON(),
+    new SlashCommandBuilder()
+      .setName('spin10')
+      .setDescription('🎰 Realizar 10 tiradas del gacha')
       .toJSON()
   ];
 
   const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
   try {
-    console.log('🔄 Registrando comando slash /oye...');
+    console.log('🔄 Registrando comandos slash...');
     await rest.put(
       Routes.applicationCommands(client.user.id),
       { body: commands }
     );
-    console.log('✅ Comando slash /oye registrado');
+    console.log('✅ Comandos slash registrados: /oye, /spin, /spin10');
   } catch (error) {
-    console.error('❌ Error registrando comando slash:', error);
+    console.error('❌ Error registrando comandos slash:', error);
   }
 });
 
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
-  if (interaction.commandName === 'oye') {
-    await interaction.reply({
-      content: 'https://tenor.com/view/bokunorhythem-otama-eyecomova-gif-23829255'
-    });
+  try {
+    if (interaction.commandName === 'oye') {
+      await interaction.reply({
+        content: 'https://tenor.com/view/bokunorhythem-otama-eyecomova-gif-23829255'
+      });
+    } else if (interaction.commandName === 'spin') {
+      await handleGirarSlash(interaction);
+    } else if (interaction.commandName === 'spin10') {
+      await handleGirar10Slash(interaction);
+    }
+  } catch (error) {
+    console.error('Error en slash command:', error);
+    const errorMsg = '❌ Ocurrió un error al ejecutar el comando.';
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp({ content: errorMsg, ephemeral: true });
+    } else {
+      await interaction.reply({ content: errorMsg, ephemeral: true });
+    }
   }
 });
 
@@ -139,15 +161,16 @@ async function handleGirar(message) {
   const guildId = message.guild?.id;
   if (!member || !guildId) return;
 
-  // Verificar cooldown
+  // Verificar si hay una tirada en curso
   const cooldownKey = `${guildId}-${message.author.id}`;
   if (spinCooldowns.has(cooldownKey)) {
     const timeLeft = spinCooldowns.get(cooldownKey) - Date.now();
     if (timeLeft > 0) {
       const embed = new EmbedBuilder()
-        .setColor(0xFF0000)
-        .setTitle('⏱️ Cooldown Activo')
-        .setDescription(`Debes esperar **${Math.ceil(timeLeft / 1000)}** segundos antes de hacer otro spin.`);
+        .setColor(0xFFD700)
+        .setTitle('🎰 Tirada en Curso')
+        .setDescription(`Ya tienes una tirada activa.\n\n⏱️ Podrás hacer otra tirada en **${Math.ceil(timeLeft / 1000)}** segundos.`)
+        .setFooter({ text: 'Espera a que termine tu tirada actual' });
       return message.reply({ embeds: [embed] });
     }
     spinCooldowns.delete(cooldownKey);
@@ -1930,6 +1953,406 @@ async function handleResetCollectable(message, args) {
     .setDescription(`Los coleccionables de **${item.name}** han sido reseteados para ${user.user.username}.`);
 
   await message.channel.send({ embeds: [embed] });
+}
+
+async function handleGirarSlash(interaction) {
+  const member = interaction.member;
+  const guildId = interaction.guild?.id;
+  if (!member || !guildId) return;
+
+  // Verificar si hay una tirada en curso
+  const cooldownKey = `${guildId}-${interaction.user.id}`;
+  if (spinCooldowns.has(cooldownKey)) {
+    const timeLeft = spinCooldowns.get(cooldownKey) - Date.now();
+    if (timeLeft > 0) {
+      const embed = new EmbedBuilder()
+        .setColor(0xFFD700)
+        .setTitle('🎰 Tirada en Curso')
+        .setDescription(`Ya tienes una tirada activa.\n\n⏱️ Podrás hacer otra tirada en **${Math.ceil(timeLeft / 1000)}** segundos.`)
+        .setFooter({ text: 'Espera a que termine tu tirada actual' });
+      return interaction.reply({ embeds: [embed], ephemeral: true });
+    }
+    spinCooldowns.delete(cooldownKey);
+  }
+
+  let ticketRole = await storage.getConfig(guildId, 'ticket_role') || DEFAULT_TICKET_ROLE;
+
+  const mentionMatch = ticketRole.match(/<@&(\d+)>/);
+  if (mentionMatch) {
+    ticketRole = mentionMatch[1];
+  }
+
+  const hasTicket = member.roles.cache.some((role) =>
+    role.name.toLowerCase() === ticketRole.toLowerCase() || role.id === ticketRole
+  );
+
+  if (!hasTicket) {
+    const embed = new EmbedBuilder()
+      .setColor(0xFF0000)
+      .setTitle('❌ Sin Ticket')
+      .setDescription(`No tienes el ticket necesario para hacer un spin.\n\nCompra un ticket en <@292953664492929025> para poder jugar.`);
+    return interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+
+  // Obtener pull_timer para calcular cooldown dinámico
+  const pullTimer = await storage.getConfig(guildId, 'pull_timer') || DEFAULT_PULL_TIMER;
+  const cooldownTime = pullTimer + 2000;
+
+  // Activar cooldown dinámico basado en pull_timer
+  spinCooldowns.set(cooldownKey, Date.now() + cooldownTime);
+  setTimeout(() => spinCooldowns.delete(cooldownKey), cooldownTime);
+
+  // QUITAR EL ROL INMEDIATAMENTE para prevenir spam
+  const ticketRoleToRemove = member.roles.cache.find((role) =>
+    role.name.toLowerCase() === ticketRole.toLowerCase() || role.id === ticketRole
+  );
+
+  if (ticketRoleToRemove) {
+    try {
+      await member.roles.remove(ticketRoleToRemove);
+      console.log(`✅ Ticket "${ticketRoleToRemove.name}" removido inmediatamente (anti-spam) [slash]`);
+    } catch (error) {
+      console.error(`❌ Error al remover ticket "${ticketRoleToRemove.name}":`, error.message);
+      
+      if (error.code === 50001) {
+        const warningEmbed = new EmbedBuilder()
+          .setColor(0xFFA500)
+          .setTitle('⚠️ No se pudo remover el ticket')
+          .setDescription(`El bot no tiene permisos para remover el rol **${ticketRoleToRemove.name}**.\n\n**Solución:** Asegúrate de que el rol del bot esté por encima de este rol en la jerarquía del servidor.`);
+        await interaction.reply({ embeds: [warningEmbed], ephemeral: true });
+        return;
+      }
+    }
+  }
+
+  const item = await storage.getRandomItemWithPity(guildId, interaction.user.id);
+
+  if (!item) {
+    return interaction.reply({ content: '❌ No hay premios configurados en el gacha.', ephemeral: true });
+  }
+
+  const isSSRorPromo = item.rarity.toUpperCase() === 'SSR' || item.promo;
+  const gifToShow = isSSRorPromo
+    ? await storage.getConfig(guildId, 'ssr_gif')
+    : await storage.getConfig(guildId, 'pity_gif');
+
+  if (gifToShow) {
+    const loadingEmbed = new EmbedBuilder()
+      .setColor(0xFFD700)
+      .setTitle('🌟 Realizando tirada...')
+      .setImage(gifToShow);
+
+    await interaction.reply({ embeds: [loadingEmbed] });
+
+    await new Promise(resolve => setTimeout(resolve, pullTimer));
+
+    await interaction.deleteReply();
+  } else {
+    await interaction.deferReply();
+  }
+
+  let hasRoleGiven = false;
+
+  if (item.roleGiven) {
+    let roleToCheck = interaction.guild?.roles.cache.find((r) => r.name === item.roleGiven);
+
+    if (!roleToCheck) {
+      const roleMentionMatch = item.roleGiven?.match(/<@&(\d+)>/);
+      if (roleMentionMatch) {
+        roleToCheck = interaction.guild?.roles.cache.get(roleMentionMatch[1]);
+      }
+    }
+
+    if (!roleToCheck && item.roleGiven) {
+      roleToCheck = interaction.guild?.roles.cache.get(item.roleGiven);
+    }
+
+    if (roleToCheck) {
+      hasRoleGiven = member.roles.cache.has(roleToCheck.id);
+    }
+  }
+
+  const isDuplicate = hasRoleGiven;
+  const embedColor = item.secret ? 0x8B0000 : storage.getRarityColor(item.rarity);
+  const objectType = item.objectType || 'personaje';
+
+  const collectables = await storage.getUserCollectables(guildId, interaction.user.id);
+  const currentCount = collectables[item.name] || 0;
+  const isCollectable = item.collectable && item.collectable > 0;
+
+  let replyToUse = item.reply;
+  if (isCollectable && (item.replyCollectable1 || item.replyCollectable2 || item.replyCollectable3)) {
+    const collectableReplies = [item.replyCollectable1, item.replyCollectable2, item.replyCollectable3].filter(r => r);
+    if (collectableReplies.length > 0) {
+      replyToUse = collectableReplies[Math.floor(Math.random() * collectableReplies.length)];
+    }
+  }
+
+  const isUrl = replyToUse?.match(/^https?:\/\/.+\.(gif|png|jpg|jpeg|webp)(\?.*)?$/i);
+
+  if ((isDuplicate && item.giveTokens) || (objectType === 'persona' && item.giveTokens)) {
+    const tokenEmoji = await storage.getTokenEmoji(item.rarity);
+    const tokenType = `Token ${item.rarity.toUpperCase()}`;
+    await storage.addTokens(guildId, interaction.user.id, tokenType, 1);
+
+    const rarityStars = storage.getRarityStars(item.rarity);
+
+    const embed = new EmbedBuilder()
+      .setColor(0xFFA500)
+      .setTitle(`🔄 ¡${objectType.charAt(0).toUpperCase() + objectType.slice(1)} Duplicado!`)
+      .addFields(
+        { name: objectType.charAt(0).toUpperCase() + objectType.slice(1), value: item.name, inline: true },
+        { name: 'Rareza', value: rarityStars, inline: true },
+        { name: '<:Dupe:1425315638959673384> Tokens', value: `+1 ${tokenEmoji}`, inline: true }
+      )
+      .setFooter({ text: `Ya tenías este ${objectType}, recibiste Tokens` });
+
+    if (isUrl) {
+      embed.setImage(replyToUse);
+    }
+
+    const replyMethod = interaction.replied ? 'followUp' : 'reply';
+    await interaction[replyMethod]({ embeds: [embed] });
+  } else {
+    const rarityStars = storage.getRarityStars(item.rarity);
+
+    const embed = new EmbedBuilder()
+      .setColor(embedColor)
+      .setTitle(item.secret ? `🔒 ¡${objectType.charAt(0).toUpperCase() + objectType.slice(1)} Secreto Obtenido!` : `🎉 ¡Nuevo ${objectType.charAt(0).toUpperCase() + objectType.slice(1)} Obtenido!`)
+      .addFields(
+        { name: objectType.charAt(0).toUpperCase() + objectType.slice(1), value: item.name, inline: true },
+        { name: 'Rareza', value: rarityStars, inline: true }
+      );
+
+    if (item.secret) {
+      embed.setDescription('🔒 ¡Has conseguido un personaje secreto!');
+    }
+
+    if (isCollectable) {
+      const remaining = item.collectable - currentCount;
+      embed.addFields({ name: '📦 Coleccionable', value: `${currentCount}/${item.collectable} (Faltan ${remaining})`, inline: false });
+
+      if (currentCount >= item.collectable && item.roleGiven) {
+        embed.addFields({ name: '✅ Completado', value: `Rol asignado: ${item.roleGiven}`, inline: false });
+      }
+    }
+
+    embed.setFooter({ text: item.secret ? '¡Has desbloqueado un secreto!' : `¡Felicidades por tu nuevo ${objectType}!` });
+
+    if (isUrl) {
+      embed.setImage(replyToUse);
+    }
+
+    const replyMethod = interaction.replied ? 'followUp' : 'reply';
+    await interaction[replyMethod]({ embeds: [embed] });
+
+    if (item.roleGiven) {
+      const shouldGiveRole = !isCollectable || currentCount >= item.collectable;
+
+      if (shouldGiveRole) {
+        let roleToGive = interaction.guild?.roles.cache.find((r) => r.name === item.roleGiven);
+
+        if (!roleToGive) {
+          const roleMentionMatch = item.roleGiven?.match(/<@&(\d+)>/);
+          if (roleMentionMatch) {
+            roleToGive = interaction.guild?.roles.cache.get(roleMentionMatch[1]);
+          }
+        }
+
+        if (!roleToGive && item.roleGiven) {
+          roleToGive = interaction.guild?.roles.cache.get(item.roleGiven);
+        }
+
+        if (roleToGive) {
+          try {
+            await member.roles.add(roleToGive);
+            console.log(`✅ Rol "${roleToGive.name}" asignado exitosamente a ${interaction.user.tag}`);
+          } catch (error) {
+            console.error(`❌ Error al asignar rol "${roleToGive.name}":`, error.message);
+          }
+        } else {
+          console.log(`⚠️ No se encontró el rol "${item.roleGiven}" en el servidor`);
+        }
+      }
+    }
+  }
+}
+
+async function handleGirar10Slash(interaction) {
+  const member = interaction.member;
+  const guildId = interaction.guild?.id;
+  if (!member || !guildId) return;
+
+  let ticketRole10 = await storage.getConfig(guildId, 'ticket_role_10') || 'Ticket x10';
+
+  const mentionMatch = ticketRole10.match(/<@&(\d+)>/);
+  if (mentionMatch) {
+    ticketRole10 = mentionMatch[1];
+  }
+
+  const hasTicket10 = member.roles.cache.some((role) =>
+    role.name.toLowerCase() === ticketRole10.toLowerCase() || role.id === ticketRole10
+  );
+
+  if (!hasTicket10) {
+    const embed = new EmbedBuilder()
+      .setColor(0xFF0000)
+      .setTitle('❌ Sin Ticket x10')
+      .setDescription(`No tienes el ticket necesario para hacer 10 spins.\n\nCompra un ticket x10 en <@292953664492929025> para poder jugar.`);
+    return interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+
+  // QUITAR EL ROL INMEDIATAMENTE para prevenir spam
+  const ticketRoleToRemove = member.roles.cache.find((role) =>
+    role.name.toLowerCase() === ticketRole10.toLowerCase() || role.id === ticketRole10
+  );
+
+  if (ticketRoleToRemove) {
+    try {
+      await member.roles.remove(ticketRoleToRemove);
+      console.log(`✅ Ticket x10 "${ticketRoleToRemove.name}" removido inmediatamente (anti-spam) [slash]`);
+    } catch (error) {
+      console.error(`❌ Error al remover ticket x10:`, error.message);
+      
+      if (error.code === 50001) {
+        const warningEmbed = new EmbedBuilder()
+          .setColor(0xFFA500)
+          .setTitle('⚠️ No se pudo remover el ticket')
+          .setDescription(`El bot no tiene permisos para remover el rol **${ticketRoleToRemove.name}**.\n\n**Solución:** Asegúrate de que el rol del bot esté por encima de este rol en la jerarquía del servidor.`);
+        await interaction.reply({ embeds: [warningEmbed], ephemeral: true });
+        return;
+      }
+    }
+  }
+
+  await interaction.deferReply();
+
+  const results = [];
+
+  for (let i = 0; i < 10; i++) {
+    const item = await storage.getRandomItemWithPity(guildId, interaction.user.id);
+    if (!item) continue;
+
+    let hasRoleGiven = false;
+
+    if (item.roleGiven) {
+      let roleToCheck = interaction.guild?.roles.cache.find((r) => r.name === item.roleGiven);
+
+      if (!roleToCheck) {
+        const roleMentionMatch = item.roleGiven?.match(/<@&(\d+)>/);
+        if (roleMentionMatch) {
+          roleToCheck = interaction.guild?.roles.cache.get(roleMentionMatch[1]);
+        }
+      }
+
+      if (!roleToCheck && item.roleGiven) {
+        roleToCheck = interaction.guild?.roles.cache.get(item.roleGiven);
+      }
+
+      if (roleToCheck) {
+        hasRoleGiven = member.roles.cache.has(roleToCheck.id);
+      }
+    }
+
+    const isDuplicate = hasRoleGiven;
+    const objectType = item.objectType || 'personaje';
+
+    if (isDuplicate || (objectType === 'persona' && item.giveTokens)) {
+      const tokenType = `Token ${item.rarity.toUpperCase()}`;
+      await storage.addTokens(guildId, interaction.user.id, tokenType, 1);
+    } else if (!isDuplicate && item.roleGiven) {
+      let roleToGive = interaction.guild?.roles.cache.find((r) => r.name === item.roleGiven);
+
+      if (!roleToGive) {
+        const roleMentionMatch = item.roleGiven?.match(/<@&(\d+)>/);
+        if (roleMentionMatch) {
+          roleToGive = interaction.guild?.roles.cache.get(roleMentionMatch[1]);
+        }
+      }
+
+      if (!roleToGive && item.roleGiven) {
+        roleToGive = interaction.guild?.roles.cache.get(item.roleGiven);
+      }
+
+      if (roleToGive && !member.roles.cache.has(roleToGive.id)) {
+        try {
+          await member.roles.add(roleToGive);
+        } catch (error) {
+          console.error(`❌ Error al asignar rol "${roleToGive.name}":`, error.message);
+        }
+      }
+    }
+
+    results.push({ item, isDuplicate });
+  }
+
+  const rarityPriority = { 'SSR': 1, 'SR': 2, 'UR': 3, 'R': 4 };
+  const hasPromo = results.some(r => r.item.promo);
+  const highestRarity = results.reduce((highest, current) => {
+    const currentPriority = rarityPriority[current.item.rarity.toUpperCase()] || 999;
+    const highestPriority = rarityPriority[highest.toUpperCase()] || 999;
+    return currentPriority < highestPriority ? current.item.rarity : highest;
+  }, 'R');
+
+  const isSSRorPromo = highestRarity.toUpperCase() === 'SSR' || hasPromo;
+  const gifToShow = isSSRorPromo
+    ? await storage.getConfig(guildId, 'ssr_gif')
+    : await storage.getConfig(guildId, 'pity_gif');
+
+  if (gifToShow) {
+    const pullTimer = await storage.getConfig(guildId, 'pull_timer') || DEFAULT_PULL_TIMER;
+
+    const loadingEmbed = new EmbedBuilder()
+      .setColor(0xFFD700)
+      .setTitle('🌟 Realizando 10 tiradas...')
+      .setImage(gifToShow);
+
+    await interaction.editReply({ embeds: [loadingEmbed] });
+    await new Promise(resolve => setTimeout(resolve, pullTimer));
+  }
+
+  const groupedResults = {};
+
+  results.forEach(({ item, isDuplicate }) => {
+    if (!groupedResults[item.name]) {
+      groupedResults[item.name] = { count: 0, isDuplicate, rarity: item.rarity };
+    }
+    groupedResults[item.name].count++;
+  });
+
+  const bestItems = results.filter(r => r.item.rarity === highestRarity);
+  const randomBestItem = bestItems[Math.floor(Math.random() * bestItems.length)].item;
+
+  const isUrl = randomBestItem.reply.match(/^https?:\/\/.+\.(gif|png|jpg|jpeg|webp)(\?.*)?$/i);
+
+  if (isUrl) {
+    const bestItemEmbed = new EmbedBuilder()
+      .setColor(storage.getRarityColor(randomBestItem.rarity))
+      .setTitle(`✨ ¡${randomBestItem.name}!`)
+      .setDescription(`${storage.getRarityStars(randomBestItem.rarity)} - Tu mejor premio de estas 10 tiradas`)
+      .setImage(randomBestItem.reply);
+
+    await interaction.editReply({ embeds: [bestItemEmbed] });
+
+    await new Promise(resolve => setTimeout(resolve, 1500));
+  }
+
+  const embed = new EmbedBuilder()
+    .setColor(0x5865F2)
+    .setTitle('🎉 Resultados de 10 Giros')
+    .setDescription(`${interaction.user.username}, aquí están tus resultados:`);
+
+  Object.entries(groupedResults).forEach(([name, data]) => {
+    const rarityStars = storage.getRarityStars(data.rarity);
+    const status = data.isDuplicate ? '🔄 Duplicado' : '✨ Nuevo';
+    embed.addFields({
+      name: `${rarityStars} ${name}`,
+      value: `${status} - Obtenido **${data.count}x**`,
+      inline: false
+    });
+  });
+
+  await interaction.followUp({ embeds: [embed] });
 }
 
 const token = process.env.DISCORD_TOKEN;

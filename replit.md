@@ -13,12 +13,18 @@ Bot de Discord tipo gacha desarrollado por Gina y amigos para un proyecto univer
 
 ## Cambios Recientes
 
-### Sistema Anti-Spam Mejorado (Octubre 2025)
+### Sistema Anti-Spam Mejorado y Comandos Slash (Octubre 2025)
 - **Cooldown dinámico:** Ahora el cooldown se sincroniza con el `pull_timer` configurado
 - **Remoción inmediata de tickets:** Los roles de ticket se quitan al inicio del spin (no al final)
 - **Prevención total de spam:** Imposible hacer múltiples spins con un solo ticket
 - **Aplicado a `*spin` y `*spin10`:** Ambos comandos tienen protección anti-spam
 - **Fórmula del cooldown:** `pull_timer + 2000ms` (2 segundos de margen de seguridad)
+- **Mensaje mejorado:** En lugar de "Cooldown Activo" ahora muestra "🎰 Tirada en Curso" más estético
+- **Comandos slash añadidos:**
+  - `/spin` - Realiza una tirada del gacha (equivalente a `*spin`)
+  - `/spin10` - Realiza 10 tiradas del gacha (equivalente a `*spin10`)
+  - `/oye` - Comando especial existente
+- **Ambas interfaces:** Tanto comandos con prefijo `*` como slash commands `/` funcionan perfectamente
 
 ### Conversión de TypeScript a JavaScript (Octubre 2025)
 - Convertido completamente de TypeScript a JavaScript puro para mejor rendimiento
