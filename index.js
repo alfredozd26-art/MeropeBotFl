@@ -172,9 +172,9 @@ async function handleGirar(message) {
     return message.reply({ embeds: [embed] });
   }
 
-  // Activar cooldown de 8 segundos
-  spinCooldowns.set(cooldownKey, Date.now() + 8500);
-  setTimeout(() => spinCooldowns.delete(cooldownKey), 8500);
+  // Activar cooldown de 10 segundos
+  spinCooldowns.set(cooldownKey, Date.now() + 10000);
+  setTimeout(() => spinCooldowns.delete(cooldownKey), 10000);
 
   const item = await storage.getRandomItemWithPity(guildId, message.author.id);
 
