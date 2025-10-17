@@ -1116,10 +1116,6 @@ async function handleExchange(message, args) {
       { name: 'Tokens Gastados', value: priceDisplay, inline: false }
     );
 
-  if (exchange.roleGiven) {
-    embed.addFields({ name: 'Rol Obtenido', value: exchange.roleGiven, inline: false });
-  }
-
   await message.reply({ embeds: [embed] });
 }
 
@@ -1212,14 +1208,9 @@ async function handleListExchanges(message) {
       .map(async ([rarity, amount]) => `${amount} ${await storage.getTokenEmoji(guildId, rarity)}`);
     const priceDisplay = (await Promise.all(priceDisplayPromises)).join(', ') || 'Sin precio configurado';
 
-    let description = `**Precio:** ${priceDisplay}`;
-    if (exchange.roleGiven) {
-      description += `\n**Rol:** ${exchange.roleGiven}`;
-    }
-
     embed.addFields({
       name: `ID: ${exchange.id} - ${exchange.rewardName}`,
-      value: description,
+      value: `**Precio:** ${priceDisplay}`,
       inline: false
     });
   }
