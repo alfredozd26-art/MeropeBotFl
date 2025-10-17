@@ -13,6 +13,13 @@ Bot de Discord tipo gacha desarrollado por Gina y amigos para un proyecto univer
 
 ## Cambios Recientes
 
+### Sistema Anti-Spam Mejorado (Octubre 2025)
+- **Cooldown dinámico:** Ahora el cooldown se sincroniza con el `pull_timer` configurado
+- **Remoción inmediata de tickets:** Los roles de ticket se quitan al inicio del spin (no al final)
+- **Prevención total de spam:** Imposible hacer múltiples spins con un solo ticket
+- **Aplicado a `*spin` y `*spin10`:** Ambos comandos tienen protección anti-spam
+- **Fórmula del cooldown:** `pull_timer + 2000ms` (2 segundos de margen de seguridad)
+
 ### Conversión de TypeScript a JavaScript (Octubre 2025)
 - Convertido completamente de TypeScript a JavaScript puro para mejor rendimiento
 - Optimizado para funcionar en Cyberpanel y servicios de hosting económicos
@@ -24,6 +31,7 @@ Bot de Discord tipo gacha desarrollado por Gina y amigos para un proyecto univer
 - Configurable en milisegundos (1000-60000ms)
 - Default: 11500ms (11.5 segundos)
 - Uso: `*editpulltimer 5000` para 5 segundos
+- **Nota:** El cooldown anti-spam se ajusta automáticamente basado en este valor
 
 ## Características Principales
 

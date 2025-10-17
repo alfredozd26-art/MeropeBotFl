@@ -172,9 +172,36 @@ async function handleGirar(message) {
     return message.reply({ embeds: [embed] });
   }
 
-  // Activar cooldown de 10 segundos
-  spinCooldowns.set(cooldownKey, Date.now() + 10000);
-  setTimeout(() => spinCooldowns.delete(cooldownKey), 10000);
+  // Obtener pull_timer para calcular cooldown dinámico
+  const pullTimer = await storage.getConfig(guildId, 'pull_timer') || DEFAULT_PULL_TIMER;
+  const cooldownTime = pullTimer + 2000; // pull_timer + 2 segundos de margen
+
+  // Activar cooldown dinámico basado en pull_timer
+  spinCooldowns.set(cooldownKey, Date.now() + cooldownTime);
+  setTimeout(() => spinCooldowns.delete(cooldownKey), cooldownTime);
+
+  // QUITAR EL ROL INMEDIATAMENTE para prevenir spam
+  const ticketRoleToRemove = member.roles.cache.find((role) =>
+    role.name.toLowerCase() === ticketRole.toLowerCase() || role.id === ticketRole
+  );
+
+  if (ticketRoleToRemove) {
+    try {
+      await member.roles.remove(ticketRoleToRemove);
+      console.log(`✅ Ticket "${ticketRoleToRemove.name}" removido inmediatamente (anti-spam)`);
+    } catch (error) {
+      console.error(`❌ Error al remover ticket "${ticketRoleToRemove.name}":`, error.message);
+      
+      if (error.code === 50001) {
+        const warningEmbed = new EmbedBuilder()
+          .setColor(0xFFA500)
+          .setTitle('⚠️ No se pudo remover el ticket')
+          .setDescription(`El bot no tiene permisos para remover el rol **${ticketRoleToRemove.name}**.\n\n**Solución:** Asegúrate de que el rol del bot esté por encima de este rol en la jerarquía del servidor.`);
+        await message.reply({ embeds: [warningEmbed] });
+        return; // Detener el spin si no se puede quitar el ticket
+      }
+    }
+  }
 
   const item = await storage.getRandomItemWithPity(guildId, message.author.id);
 
@@ -325,27 +352,6 @@ async function handleGirar(message) {
       }
     }
   }
-
-  const ticketRoleToRemove = member.roles.cache.find((role) =>
-    role.name.toLowerCase() === ticketRole.toLowerCase() || role.id === ticketRole
-  );
-
-  if (ticketRoleToRemove) {
-    try {
-      await member.roles.remove(ticketRoleToRemove);
-      console.log(`✅ Ticket "${ticketRoleToRemove.name}" removido exitosamente`);
-    } catch (error) {
-      console.error(`❌ Error al remover ticket "${ticketRoleToRemove.name}":`, error.message);
-
-      if (error.code === 50001) {
-        const warningEmbed = new EmbedBuilder()
-          .setColor(0xFFA500)
-          .setTitle('⚠️ No se pudo remover el ticket')
-          .setDescription(`El bot no tiene permisos para remover el rol **${ticketRoleToRemove.name}**.\n\n**Solución:** Asegúrate de que el rol del bot esté por encima de este rol en la jerarquía del servidor.`);
-        await message.reply({ embeds: [warningEmbed] });
-      }
-    }
-  }
 }
 
 async function handleGirar10(message) {
@@ -370,6 +376,29 @@ async function handleGirar10(message) {
       .setTitle('❌ Sin Ticket x10')
       .setDescription(`No tienes el ticket necesario para hacer 10 spins.\n\nCompra un ticket x10 en <@292953664492929025> para poder jugar.`);
     return message.reply({ embeds: [embed] });
+  }
+
+  // QUITAR EL ROL INMEDIATAMENTE para prevenir spam
+  const ticketRoleToRemove = member.roles.cache.find((role) =>
+    role.name.toLowerCase() === ticketRole10.toLowerCase() || role.id === ticketRole10
+  );
+
+  if (ticketRoleToRemove) {
+    try {
+      await member.roles.remove(ticketRoleToRemove);
+      console.log(`✅ Ticket x10 "${ticketRoleToRemove.name}" removido inmediatamente (anti-spam)`);
+    } catch (error) {
+      console.error(`❌ Error al remover ticket x10:`, error.message);
+      
+      if (error.code === 50001) {
+        const warningEmbed = new EmbedBuilder()
+          .setColor(0xFFA500)
+          .setTitle('⚠️ No se pudo remover el ticket')
+          .setDescription(`El bot no tiene permisos para remover el rol **${ticketRoleToRemove.name}**.\n\n**Solución:** Asegúrate de que el rol del bot esté por encima de este rol en la jerarquía del servidor.`);
+        await message.reply({ embeds: [warningEmbed] });
+        return; // Detener el spin si no se puede quitar el ticket
+      }
+    }
   }
 
   const results = [];
@@ -499,19 +528,6 @@ async function handleGirar10(message) {
   });
 
   await message.reply({ embeds: [embed] });
-
-  const ticketRoleToRemove = member.roles.cache.find((role) =>
-    role.name.toLowerCase() === ticketRole10.toLowerCase() || role.id === ticketRole10
-  );
-
-  if (ticketRoleToRemove) {
-    try {
-      await member.roles.remove(ticketRoleToRemove);
-      console.log(`✅ Ticket x10 "${ticketRoleToRemove.name}" removido exitosamente`);
-    } catch (error) {
-      console.error(`❌ Error al remover ticket x10:`, error.message);
-    }
-  }
 }
 
 async function handleBanner(message) {
