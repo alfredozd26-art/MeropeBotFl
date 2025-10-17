@@ -19,6 +19,7 @@ const DEFAULT_TICKET_ROLE = 'Ticket';
 const DEFAULT_PULL_TIMER = 11500;
 
 const pendingConfirmations = new Map();
+const spinCooldowns = new Map();
 
 client.on('clientReady', async () => {
   console.log(`✅ Bot conectado como ${client.user.tag}`);
@@ -138,6 +139,20 @@ async function handleGirar(message) {
   const guildId = message.guild?.id;
   if (!member || !guildId) return;
 
+  // Verificar cooldown
+  const cooldownKey = `${guildId}-${message.author.id}`;
+  if (spinCooldowns.has(cooldownKey)) {
+    const timeLeft = spinCooldowns.get(cooldownKey) - Date.now();
+    if (timeLeft > 0) {
+      const embed = new EmbedBuilder()
+        .setColor(0xFF0000)
+        .setTitle('⏱️ Cooldown Activo')
+        .setDescription(`Debes esperar **${Math.ceil(timeLeft / 1000)}** segundos antes de hacer otro spin.`);
+      return message.reply({ embeds: [embed] });
+    }
+    spinCooldowns.delete(cooldownKey);
+  }
+
   let ticketRole = await storage.getConfig(guildId, 'ticket_role') || DEFAULT_TICKET_ROLE;
 
   const mentionMatch = ticketRole.match(/<@&(\d+)>/);
@@ -156,6 +171,10 @@ async function handleGirar(message) {
       .setDescription(`No tienes el ticket necesario para hacer un spin.\n\nCompra un ticket en <@292953664492929025> para poder jugar.`);
     return message.reply({ embeds: [embed] });
   }
+
+  // Activar cooldown de 5 segundos
+  spinCooldowns.set(cooldownKey, Date.now() + 5000);
+  setTimeout(() => spinCooldowns.delete(cooldownKey), 5000);
 
   const item = await storage.getRandomItemWithPity(guildId, message.author.id);
 
