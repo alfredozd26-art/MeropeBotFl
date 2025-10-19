@@ -2516,9 +2516,19 @@ async function handleSell(message, args) {
 
 const token = process.env.DISCORD_TOKEN;
 
+console.log('🔍 Verificando configuración del token...');
+console.log(`Token cargado: ${token ? 'SÍ (primeros 10 caracteres: ' + token.substring(0, 10) + '...)' : 'NO - REVISAR ARCHIVO .env'}`);
+console.log(`Longitud del token: ${token ? token.length : 0} caracteres`);
+
 if (!token) {
   console.error('❌ Error: No se encontró DISCORD_TOKEN en las variables de entorno');
+  console.error('❌ Asegúrate de tener un archivo .env (no .env.example) con: DISCORD_TOKEN=tu_token_aqui');
   process.exit(1);
+}
+
+if (token.length < 50) {
+  console.error('⚠️ ADVERTENCIA: El token parece estar incompleto (muy corto)');
+  console.error('⚠️ Un token válido de Discord tiene ~70 caracteres y tres partes separadas por puntos');
 }
 
 client.login(token);
