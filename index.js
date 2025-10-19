@@ -984,7 +984,8 @@ async function handleDeleteItem(message, args) {
   const guildId = message.guild?.id;
   if (!guildId) return;
 
-  const item = await storage.getItemByName(guildId, itemName);
+  const allItems = await storage.getAllItems(guildId);
+  const item = await searchItemByPartialName(allItems, itemName);
 
   if (!item) {
     return message.channel.send(`❌ No se encontró el premio **${itemName}**.`);
@@ -1054,9 +1055,15 @@ async function handleItemInfo(message, args) {
   const guildId = message.guild?.id;
   if (!guildId) return;
 
-  const item = await storage.getItemByName(guildId, itemName);
+  const allItems = await storage.getAllItems(guildId);
+  const item = await searchItemByPartialName(allItems, itemName);
 
   if (!item) {
+    return message.reply(`❌ No se encontró el premio **${itemName}**.`);
+  }
+
+  // Proteger items secretos para usuarios sin permisos de admin
+  if (item.secret && !message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return message.reply(`❌ No se encontró el premio **${itemName}**.`);
   }
 
@@ -1945,7 +1952,8 @@ async function handleResetCollectable(message, args) {
   const guildId = message.guild?.id;
   if (!guildId) return;
 
-  const item = await storage.getItemByName(guildId, itemName);
+  const allItems = await storage.getAllItems(guildId);
+  const item = await searchItemByPartialName(allItems, itemName);
   if (!item) {
     return message.reply(`❌ No se encontró el item **${itemName}**.`);
   }
