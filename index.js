@@ -802,7 +802,7 @@ async function handleEditItem(message, args) {
   if (!message.channel.isSendable()) return;
 
   if (args.length < 2) {
-    return message.channel.send('❌ Uso: `*edititem <nombre> <campo> <valor...>`\n**Campos:** chance, rarity, reply, tokens, role-given, object, promo, secret, collectable\n\nEjemplos:\n`*edititem Joker rarity SSR`\n`*edititem Joker chance 5`\n`*edititem Joker reply https://imagen.gif`\n`*edititem Joker tokens si`\n`*edititem Joker role-given @NombreRol`\n`*edititem Joker promo true`\n`*edititem Joker secret true`\n`*edititem "Cuerpo Santo" collectable 5`');
+    return message.channel.send('❌ Uso: `*edititem <nombre> <campo> <valor...>`\n**Campos:** chance, rarity, reply, tokens, role-given, object, promo, secret, collectable\n\nEjemplos:\n`*edititem Joker rarity SSR`\n`*edititem Joker chance 10`\n`*edititem Joker reply https://imagen.gif`\n`*edititem Joker tokens si`\n`*edititem Joker role-given NombreRol`\n`*edititem Joker promo true`\n`*edititem Joker secret true`\n`*edititem "Cuerpo Santo" collectable 5`');
   }
 
   let itemName;
@@ -2483,23 +2483,23 @@ async function handleSell(message, args) {
     const embed = new EmbedBuilder()
       .setColor(0x00FF00)
       .setTitle('✅ Venta Exitosa')
-      .setDescription(`Has vendido **${quantity}x ${item.name}** por **${totalPrice}** 💰`)
+      .setDescription(`Has vendido **${quantity}x ${item.name}** por **${totalPrice}** en UnbelievaBoat.`)
       .addFields(
-        { name: 'Precio Unitario', value: `${item.sellPrice} 💰`, inline: true },
-        { name: 'Cantidad Vendida', value: `${quantity}x`, inline: true },
-        { name: 'Dinero Recibido', value: `${totalPrice} 💰`, inline: false }
+        { name: 'Precio Unitario', value: `${item.sellPrice}`, inline: true },
+        { name: 'Cantidad Vendida', value: `${quantity}`, inline: true },
+        { name: 'Dinero Recibido', value: `${totalPrice}`, inline: false }
       );
 
     await message.reply({ embeds: [embed] });
   } catch (error) {
     console.error('Error al contactar UnbelievaBoat API:', error.response?.data || error.message);
-    
+
     if (error.response?.status === 401) {
-      await message.reply('❌ El token de la API de UnbelievaBoat es inválido. Contacta a un administrador para configurarlo correctamente.');
+      await message.reply('❌ Token de API de UnbelievaBoat inválido. Contacta a un administrador para configurarlo correctamente.');
     } else if (error.response?.status === 404) {
-      await message.reply('❌ No se encontró el servidor o usuario en UnbelievaBoat. Asegúrate de que el bot de UnbelievaBoat esté en el servidor.');
+      await message.reply('❌ No se encontró el servidor o usuario en UnbelievaBoat. Asegúrate de que el bot UnbelievaBoat esté en el servidor.');
     } else {
-      await message.reply('❌ Ocurrió un error al procesar la venta. Por favor, inténtalo de nuevo más tarde o contacta a un administrador.');
+      await message.reply('❌ Ocurrió un error al procesar la venta con UnbelievaBoat. Por favor, inténtalo de nuevo más tarde.');
     }
   }
 }
