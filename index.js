@@ -976,10 +976,10 @@ async function handleEditItem(message, args) {
     }
 
     await storage.updateItem(guildId, item.name, 'sellPrice', price);
-    return message.channel.send(`✅ El precio de venta del item **${item.name}** ha sido actualizado a **${price}**.`);
+    return message.channel.send(`✅ El precio de venta del item **${item.name}** ha sido actualizado a **${price}** 💰`);
 
   } else {
-    return message.channel.send('❌ Campo inválido. Usa: chance, rarity, reply, tokens, role-given, object, promo, secret, collectable, name, replycollectable1, replycollectable2, replycollectable3, sellprice');
+    return message.channel.send('❌ Campo inválido. Usa: chance, rarity, reply, tokens, role-given, object, promo, secret, collectable, sellprice, name, replycollectable1, replycollectable2, replycollectable3');
   }
 }
 
