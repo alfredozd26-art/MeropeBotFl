@@ -2,7 +2,6 @@ const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, Permission
 const dotenv = require('dotenv');
 const storage = require('./server/storage');
 const { searchItemByPartialName, searchItemByPartialNameSync } = require('./utils/itemSearch');
-const axios = require('axios');
 
 dotenv.config();
 
@@ -152,10 +151,6 @@ client.on('messageCreate', async (message) => {
       await handleResetCollectable(message, args);
     } else if (command === 'editpity') {
       await handleEditPity(message, args);
-    } else if (command === 'sell') {
-      await handleSell(message, args);
-    } else if (command === 'edititem') { // Added edititem again to ensure it's handled, just in case.
-      await handleEditItem(message, args);
     }
   } catch (error) {
     console.error('Error:', error);
@@ -221,7 +216,7 @@ async function handleGirar(message) {
       console.log(`✅ Ticket "${ticketRoleToRemove.name}" removido (con delay de 1s)`);
     } catch (error) {
       console.error(`❌ Error al remover ticket "${ticketRoleToRemove.name}":`, error.message);
-
+      
       if (error.code === 50001) {
         const warningEmbed = new EmbedBuilder()
           .setColor(0xFFA500)
@@ -422,7 +417,7 @@ async function handleGirar10(message) {
       console.log(`✅ Ticket x10 "${ticketRoleToRemove.name}" removido (con delay de 1s)`);
     } catch (error) {
       console.error(`❌ Error al remover ticket x10:`, error.message);
-
+      
       if (error.code === 50001) {
         const warningEmbed = new EmbedBuilder()
           .setColor(0xFFA500)
@@ -802,7 +797,7 @@ async function handleEditItem(message, args) {
   if (!message.channel.isSendable()) return;
 
   if (args.length < 2) {
-    return message.channel.send('❌ Uso: `*edititem <nombre> <campo> <valor...>`\n**Campos:** chance, rarity, reply, tokens, role-given, object, promo, secret, collectable, sellprice\n\nEjemplos:\n`*edititem Joker rarity SSR`\n`*edititem Joker chance 10`\n`*edititem Joker reply https://imagen.gif`\n`*edititem Joker tokens si`\n`*edititem Joker role-given NombreRol`\n`*edititem Joker promo true`\n`*edititem Joker secret true`\n`*edititem "Cuerpo Santo" collectable 5`\n`*edititem "Jack Frost" sellprice 1000`');
+    return message.channel.send('❌ Uso: `*edititem <nombre> <campo> <valor...>`\n**Campos:** chance, rarity, reply, tokens, role-given, object, promo, secret, collectable\n\nEjemplos:\n`*edititem Joker rarity SSR`\n`*edititem Joker chance 5`\n`*edititem Joker reply https://imagen.gif`\n`*edititem Joker tokens si`\n`*edititem Joker role-given @NombreRol`\n`*edititem Joker promo true`\n`*edititem Joker secret true`\n`*edititem "Cuerpo Santo" collectable 5`');
   }
 
   let itemName;
@@ -969,17 +964,8 @@ async function handleEditItem(message, args) {
     await storage.updateItem(guildId, item.name, 'replyCollectable3', reply || null);
     return message.channel.send(`✅ Reply coleccionable 3 del premio **${item.name}** actualizado.`);
 
-  } else if (field === 'sellprice') {
-    const price = parseInt(valueArgs[0]);
-    if (isNaN(price) || price < 0) {
-      return message.channel.send('❌ El precio de venta debe ser un número mayor o igual a 0.');
-    }
-
-    await storage.updateItem(guildId, item.name, 'sellPrice', price);
-    return message.channel.send(`✅ El precio de venta del item **${item.name}** ha sido actualizado a **${price}** 💰`);
-
   } else {
-    return message.channel.send('❌ Campo inválido. Usa: chance, rarity, reply, tokens, role-given, object, promo, secret, collectable, sellprice, name, replycollectable1, replycollectable2, replycollectable3');
+    return message.channel.send('❌ Campo inválido. Usa: chance, rarity, reply, tokens, role-given, object, promo, secret, collectable, name, replycollectable1, replycollectable2, replycollectable3');
   }
 }
 
@@ -1455,7 +1441,7 @@ async function handleHelp(message) {
       },
       {
         name: '🎒 Comandos de Inventario',
-        value: '**`*tokens`** - Ver tus Tokens acumulados\n**`*inventory`** - Ver tus premios y objetos coleccionables\n**`*sell <item> <cantidad>`** - Vender objetos por dinero\n**`*canjear <ID>`** - Canjear Tokens por recompensas\n**`*listexchanges`** - Ver canjes disponibles',
+        value: '**`*tokens`** - Ver tus Tokens acumulados\n**`*inventory`** - Ver tus premios y objetos coleccionables\n**`*canjear <ID>`** - Canjear Tokens por recompensas\n**`*listexchanges`** - Ver canjes disponibles',
         inline: false
       },
       {
@@ -1488,7 +1474,7 @@ async function handleFixHelp(message) {
       },
       {
         name: '🎒 Comandos de Inventario',
-        value: '**`*tokens`** - Ver tus Tokens acumulados\n**`*inventory`** - Ver tus premios y objetos coleccionables\n**`*sell <item> <cantidad>`** - Vender objetos por dinero\n**`*canjear <ID>`** - Canjear Tokens por recompensas\n**`*listexchanges`** - Ver canjes disponibles',
+        value: '**`*tokens`** - Ver tus Tokens acumulados\n**`*inventory`** - Ver tus premios y objetos coleccionables\n**`*canjear <ID>`** - Canjear Tokens por recompensas\n**`*listexchanges`** - Ver canjes disponibles',
         inline: false
       },
       {
@@ -2082,7 +2068,7 @@ async function handleGirarSlash(interaction) {
       console.log(`✅ Ticket "${ticketRoleToRemove.name}" removido (con delay de 1s) [slash]`);
     } catch (error) {
       console.error(`❌ Error al remover ticket "${ticketRoleToRemove.name}":`, error.message);
-
+      
       if (error.code === 50001) {
         const warningEmbed = new EmbedBuilder()
           .setColor(0xFFA500)
@@ -2107,7 +2093,7 @@ async function handleGirarSlash(interaction) {
 
   if (gifToShow) {
     const pullTimer = await storage.getConfig(guildId, 'pull_timer') || DEFAULT_PULL_TIMER;
-
+    
     const loadingEmbed = new EmbedBuilder()
       .setColor(0xFFD700)
       .setTitle('🌟 Realizando tirada...')
@@ -2289,7 +2275,7 @@ async function handleGirar10Slash(interaction) {
       console.log(`✅ Ticket x10 "${ticketRoleToRemove.name}" removido (con delay de 1s) [slash]`);
     } catch (error) {
       console.error(`❌ Error al remover ticket x10:`, error.message);
-
+      
       if (error.code === 50001) {
         const warningEmbed = new EmbedBuilder()
           .setColor(0xFFA500)
@@ -2429,106 +2415,11 @@ async function handleGirar10Slash(interaction) {
   await interaction.followUp({ embeds: [embed] });
 }
 
-async function handleSell(message, args) {
-  const guildId = message.guild?.id;
-  if (!guildId) return;
-
-  if (args.length < 2) {
-    return message.reply('❌ Uso: `*sell <nombre del item> <cantidad>`\n\n**Nota:** Solo se pueden vender objetos de tipo "persona" u "objeto". No se pueden vender personajes secretos ni personajes normales que no sean de tipo "persona" u "objeto".');
-  }
-
-  const itemName = args.slice(0, -1).join(' ');
-  const quantity = parseInt(args[args.length - 1]);
-
-  if (isNaN(quantity) || quantity <= 0) {
-    return message.reply('❌ La cantidad debe ser un número válido mayor a 0.');
-  }
-
-  const allItems = await storage.getAllItems(guildId);
-  const item = await searchItemByPartialName(allItems, itemName);
-
-  if (!item) {
-    return message.reply(`❌ No se encontró el item **${itemName}**.`);
-  }
-
-  const objectType = (item.objectType || 'personaje').toLowerCase();
-  if (item.secret || (objectType !== 'persona' && objectType !== 'objeto' && objectType !== 'object')) {
-    return message.reply(`❌ No puedes vender el item **${item.name}**. Solo se pueden vender items de tipo "persona" u "objeto" que no sean secretos.`);
-  }
-
-  const userCollectables = await storage.getUserCollectables(guildId, message.author.id);
-  const currentAmount = userCollectables[item.name] || 0;
-
-  if (currentAmount < quantity) {
-    return message.reply(`❌ No tienes suficientes unidades de **${item.name}** para vender.\nTienes: ${currentAmount}x`);
-  }
-
-  // Verificar si el item tiene un precio de venta configurado
-  if (item.sellPrice === undefined || item.sellPrice === null) {
-    return message.reply(`❌ El item **${item.name}** no tiene un precio de venta configurado. Pide a un administrador que lo configure con \`*edititem ${item.name} sellprice <precio>\`.`);
-  }
-
-  const totalPrice = item.sellPrice * quantity;
-
-  try {
-    // Llamar a la API de UnbelievaBoat para dar el dinero
-    const response = await axios.patch(
-      `https://unbelievaboat.com/api/v1/guilds/${guildId}/users/${message.author.id}`,
-      {
-        cash: totalPrice,
-        reason: `Venta de ${quantity}x ${item.name}`
-      },
-      {
-        headers: {
-          'Authorization': process.env.UNBELIEVABOAT_API_TOKEN,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    // Remover los items del inventario del usuario
-    await storage.removeCollectable(guildId, message.author.id, item.name, quantity);
-
-    const embed = new EmbedBuilder()
-      .setColor(0x00FF00)
-      .setTitle('✅ Venta Exitosa')
-      .setDescription(`Has vendido **${quantity}x ${item.name}** por **${totalPrice}** en UnbelievaBoat.`)
-      .addFields(
-        { name: 'Precio Unitario', value: `${item.sellPrice}`, inline: true },
-        { name: 'Cantidad Vendida', value: `${quantity}`, inline: true },
-        { name: 'Dinero Recibido', value: `${totalPrice}`, inline: false }
-      );
-
-    await message.reply({ embeds: [embed] });
-  } catch (error) {
-    console.error('Error al contactar UnbelievaBoat API:', error.response?.data || error.message);
-
-    if (error.response?.status === 401) {
-      await message.reply('❌ Token de API de UnbelievaBoat inválido. Contacta a un administrador para configurarlo correctamente.');
-    } else if (error.response?.status === 404) {
-      await message.reply('❌ No se encontró el servidor o usuario en UnbelievaBoat. Asegúrate de que el bot UnbelievaBoat esté en el servidor.');
-    } else {
-      await message.reply('❌ Ocurrió un error al procesar la venta con UnbelievaBoat. Por favor, inténtalo de nuevo más tarde.');
-    }
-  }
-}
-
-
 const token = process.env.DISCORD_TOKEN;
-
-console.log('🔍 Verificando configuración del token...');
-console.log(`Token cargado: ${token ? 'SÍ (primeros 10 caracteres: ' + token.substring(0, 10) + '...)' : 'NO - REVISAR ARCHIVO .env'}`);
-console.log(`Longitud del token: ${token ? token.length : 0} caracteres`);
 
 if (!token) {
   console.error('❌ Error: No se encontró DISCORD_TOKEN en las variables de entorno');
-  console.error('❌ Asegúrate de tener un archivo .env (no .env.example) con: DISCORD_TOKEN=tu_token_aqui');
   process.exit(1);
-}
-
-if (token.length < 50) {
-  console.error('⚠️ ADVERTENCIA: El token parece estar incompleto (muy corto)');
-  console.error('⚠️ Un token válido de Discord tiene ~70 caracteres y tres partes separadas por puntos');
 }
 
 client.login(token);

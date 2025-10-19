@@ -46,11 +46,11 @@ async function getItemByName(guildId, name) {
 async function createItem(guildId, name, chance, rarity, reply, secret = false) {
   const filePath = getFilePath(guildId, 'items');
   const data = await readJSON(filePath, { items: [] });
-
+  
   if (!data.items) {
     data.items = [];
   }
-
+  
   data.items.push({
     name,
     chance,
@@ -63,16 +63,16 @@ async function createItem(guildId, name, chance, rarity, reply, secret = false) 
     promo: false,
     collectable: 0
   });
-
+  
   await writeJSON(filePath, data);
 }
 
 async function deleteItem(guildId, name) {
   const filePath = getFilePath(guildId, 'items');
   const data = await readJSON(filePath, { items: [] });
-
+  
   if (!data.items) return;
-
+  
   data.items = data.items.filter(item => item.name.toLowerCase() !== name.toLowerCase());
   await writeJSON(filePath, data);
 }
@@ -80,7 +80,7 @@ async function deleteItem(guildId, name) {
 async function resetAllItems(guildId) {
   const filePath = getFilePath(guildId, 'items');
   await writeJSON(filePath, { items: [] });
-
+  
   const inventoryPath = getFilePath(guildId, 'collectables');
   await writeJSON(inventoryPath, {});
 }
@@ -88,12 +88,12 @@ async function resetAllItems(guildId) {
 async function updateItem(guildId, name, field, value) {
   const filePath = getFilePath(guildId, 'items');
   const data = await readJSON(filePath, { items: [] });
-
+  
   if (!data.items) return false;
-
+  
   const item = data.items.find(i => i.name.toLowerCase() === name.toLowerCase());
   if (!item) return false;
-
+  
   item[field] = value;
   await writeJSON(filePath, data);
   return true;
@@ -102,24 +102,24 @@ async function updateItem(guildId, name, field, value) {
 async function renameItem(guildId, oldName, newName) {
   const filePath = getFilePath(guildId, 'items');
   const data = await readJSON(filePath, { items: [] });
-
+  
   if (!data.items) return false;
-
+  
   const item = data.items.find(i => i.name.toLowerCase() === oldName.toLowerCase());
   if (!item) return false;
-
+  
   const collectablesPath = getFilePath(guildId, 'collectables');
   const collectablesData = await readJSON(collectablesPath, {});
-
+  
   for (const userId in collectablesData) {
     if (collectablesData[userId][oldName]) {
       collectablesData[userId][newName] = collectablesData[userId][oldName];
       delete collectablesData[userId][oldName];
     }
   }
-
+  
   await writeJSON(collectablesPath, collectablesData);
-
+  
   item.name = newName;
   await writeJSON(filePath, data);
   return true;
@@ -140,18 +140,18 @@ async function setConfig(guildId, key, value) {
 
 async function getRandomItemWithPity(guildId, userId) {
   const items = await getAllItems(guildId);
-
+  
   if (items.length === 0) return null;
-
+  
   const pityData = await getUserPity(guildId, userId);
   const pityMax = await getConfig(guildId, 'pity_max') || 90;
   let selectedItem;
-
+  
   const totalChance = items.reduce((sum, item) => sum + item.chance, 0);
-
+  
   if (pityData.counter >= (pityMax - 1)) {
     const ssrItems = items.filter(item => item.rarity.toUpperCase() === 'SSR');
-
+    
     if (ssrItems.length > 0) {
       if (pityData.guaranteedPromo) {
         const promoItems = ssrItems.filter(item => item.promo);
@@ -167,7 +167,7 @@ async function getRandomItemWithPity(guildId, userId) {
           }
         }
       }
-
+      
       if (!selectedItem) {
         const ssrTotalChance = ssrItems.reduce((sum, item) => sum + item.chance, 0);
         let random = Math.random() * ssrTotalChance;
@@ -181,7 +181,7 @@ async function getRandomItemWithPity(guildId, userId) {
       }
     }
   }
-
+  
   if (!selectedItem) {
     let random = Math.random() * totalChance;
     for (const item of items) {
@@ -192,43 +192,43 @@ async function getRandomItemWithPity(guildId, userId) {
       }
     }
   }
-
+  
   if (!selectedItem && items.length > 0) {
     selectedItem = items[0];
   }
-
+  
   if (selectedItem && selectedItem.rarity.toUpperCase() === 'SSR') {
     await resetPity(guildId, userId, selectedItem.promo);
   } else {
     await incrementPity(guildId, userId);
   }
-
+  
   if (selectedItem && (selectedItem.objectType === 'persona' || selectedItem.objectType === 'objeto' || selectedItem.objectType === 'object')) {
     await incrementCollectable(guildId, userId, selectedItem.name);
   }
-
+  
   return selectedItem;
 }
 
 async function getUserPity(guildId, userId) {
   const filePath = getFilePath(guildId, 'pity');
   const data = await readJSON(filePath, {});
-
+  
   if (!data[userId]) {
     data[userId] = { counter: 0, guaranteedPromo: false };
   }
-
+  
   return data[userId];
 }
 
 async function incrementPity(guildId, userId) {
   const filePath = getFilePath(guildId, 'pity');
   const data = await readJSON(filePath, {});
-
+  
   if (!data[userId]) {
     data[userId] = { counter: 0, guaranteedPromo: false };
   }
-
+  
   data[userId].counter += 1;
   await writeJSON(filePath, data);
 }
@@ -236,14 +236,14 @@ async function incrementPity(guildId, userId) {
 async function resetPity(guildId, userId, wasPromo) {
   const filePath = getFilePath(guildId, 'pity');
   const data = await readJSON(filePath, {});
-
+  
   if (!data[userId]) {
     data[userId] = { counter: 0, guaranteedPromo: false };
   }
-
+  
   data[userId].counter = 0;
   data[userId].guaranteedPromo = !wasPromo;
-
+  
   await writeJSON(filePath, data);
 }
 
@@ -256,15 +256,15 @@ async function getUserTokens(guildId, userId) {
 async function addTokens(guildId, userId, tokenType, amount) {
   const filePath = getFilePath(guildId, 'tokens');
   const data = await readJSON(filePath, {});
-
+  
   if (!data[userId]) {
     data[userId] = {};
   }
-
+  
   if (!data[userId][tokenType]) {
     data[userId][tokenType] = 0;
   }
-
+  
   data[userId][tokenType] += amount;
   await writeJSON(filePath, data);
 }
@@ -272,11 +272,11 @@ async function addTokens(guildId, userId, tokenType, amount) {
 async function removeTokens(guildId, userId, tokenType, amount) {
   const filePath = getFilePath(guildId, 'tokens');
   const data = await readJSON(filePath, {});
-
+  
   if (!data[userId] || !data[userId][tokenType] || data[userId][tokenType] < amount) {
     return false;
   }
-
+  
   data[userId][tokenType] -= amount;
   await writeJSON(filePath, data);
   return true;
@@ -296,15 +296,15 @@ async function getUserCollectables(guildId, userId) {
 async function incrementCollectable(guildId, userId, itemName) {
   const filePath = getFilePath(guildId, 'collectables');
   const data = await readJSON(filePath, {});
-
+  
   if (!data[userId]) {
     data[userId] = {};
   }
-
+  
   if (!data[userId][itemName]) {
     data[userId][itemName] = 0;
   }
-
+  
   data[userId][itemName] += 1;
   await writeJSON(filePath, data);
 }
@@ -312,24 +312,11 @@ async function incrementCollectable(guildId, userId, itemName) {
 async function resetCollectable(guildId, userId, itemName) {
   const filePath = getFilePath(guildId, 'collectables');
   const data = await readJSON(filePath, {});
-
+  
   if (data[userId] && data[userId][itemName]) {
     data[userId][itemName] = 0;
     await writeJSON(filePath, data);
   }
-}
-
-async function removeCollectable(guildId, userId, itemName, amount) {
-  const filePath = getFilePath(guildId, 'collectables');
-  const data = await readJSON(filePath, {});
-
-  if (!data[userId] || !data[userId][itemName]) {
-    return false;
-  }
-
-  data[userId][itemName] = Math.max(0, data[userId][itemName] - amount);
-  await writeJSON(filePath, data);
-  return true;
 }
 
 async function getExchangeRules(guildId) {
@@ -341,11 +328,11 @@ async function getExchangeRules(guildId) {
 async function createExchange(guildId, rewardName) {
   const filePath = getFilePath(guildId, 'exchanges');
   const data = await readJSON(filePath, { exchanges: [] });
-
+  
   if (!data.exchanges) {
     data.exchanges = [];
   }
-
+  
   const id = (data.exchanges.length + 1).toString();
   data.exchanges.push({
     id,
@@ -353,7 +340,7 @@ async function createExchange(guildId, rewardName) {
     prices: {},
     roleGiven: null
   });
-
+  
   await writeJSON(filePath, data);
   return id;
 }
@@ -415,7 +402,7 @@ async function getTokenEmoji(guildIdOrRarity, rarityParam) {
   } else {
     rarity = guildIdOrRarity;
   }
-
+  
   const emojis = {
     'SSR': '<:SSRTK:1425246335472369857>',
     'SR': '<:SRTK:1425246269307359395>',
@@ -451,7 +438,6 @@ module.exports = {
   getUserCollectables,
   incrementCollectable,
   resetCollectable,
-  removeCollectable,
   getExchangeRules,
   createExchange,
   updateExchangePrices,
