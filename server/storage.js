@@ -144,11 +144,12 @@ async function getRandomItemWithPity(guildId, userId) {
   if (items.length === 0) return null;
   
   const pityData = await getUserPity(guildId, userId);
+  const pityMax = await getConfig(guildId, 'pity_max') || 90;
   let selectedItem;
   
   const totalChance = items.reduce((sum, item) => sum + item.chance, 0);
   
-  if (pityData.counter >= 89) {
+  if (pityData.counter >= (pityMax - 1)) {
     const ssrItems = items.filter(item => item.rarity.toUpperCase() === 'SSR');
     
     if (ssrItems.length > 0) {

@@ -149,6 +149,8 @@ client.on('messageCreate', async (message) => {
       await handleInventory(message);
     } else if (command === 'resetcollectable') {
       await handleResetCollectable(message, args);
+    } else if (command === 'editpity') {
+      await handleEditPity(message, args);
     }
   } catch (error) {
     console.error('Error:', error);
@@ -1500,7 +1502,7 @@ async function handleFixHelp(message) {
       },
       {
         name: '⚙️ Comandos de Configuración',
-        value: '**`*setticketrole <rol>`** - Configurar rol de ticket para `*spin`\n**`*setticketrole10 <rol>`** - Configurar rol de ticket para `*spin10`\n**`*editpull <url_gif>`** - Configurar GIF de tirada normal\n**`*editpull remove`** - Quitar GIF de tirada normal\n**`*editpullssr <url_gif>`** - Configurar GIF para SSR/Promocional\n**`*editpullssr remove`** - Quitar GIF de SSR/Promocional\n**`*editpulltimer <milisegundos>`** - Configurar duración del GIF (ej: 5000 = 5s)\n**`*editpulltimer`** - Ver timer actual\n**`*editpulltimer reset`** - Resetear timer a 11.5s\n**`*setcurrency <emoji>`** - Configurar emoji del título de tokens',
+        value: '**`*setticketrole <rol>`** - Configurar rol de ticket para `*spin`\n**`*setticketrole10 <rol>`** - Configurar rol de ticket para `*spin10`\n**`*editpull <url_gif>`** - Configurar GIF de tirada normal\n**`*editpull remove`** - Quitar GIF de tirada normal\n**`*editpullssr <url_gif>`** - Configurar GIF para SSR/Promocional\n**`*editpullssr remove`** - Quitar GIF de SSR/Promocional\n**`*editpulltimer <milisegundos>`** - Configurar duración del GIF (ej: 5000 = 5s)\n**`*editpulltimer`** - Ver timer actual\n**`*editpulltimer reset`** - Resetear timer a 11.5s\n**`*editpity <número>`** - Configurar en qué tirada es el SSR asegurado (ej: 100)\n**`*editpity`** - Ver pity actual\n**`*editpity reset`** - Resetear pity a 90\n**`*setcurrency <emoji>`** - Configurar emoji del título de tokens',
         inline: false
       },
       {
@@ -1824,6 +1826,7 @@ async function handlePityInfo(message) {
   const guildId = message.guild?.id;
   if (!guildId) return;
   const pityData = await storage.getUserPity(guildId, message.author.id);
+  const pityMax = await storage.getConfig(guildId, 'pity_max') || 90;
 
   const fiftyFiftyStatus = pityData.guaranteedPromo
     ? '🎯 Próximo SSR será PROMOCIONAL garantizado'
@@ -1834,8 +1837,8 @@ async function handlePityInfo(message) {
     .setTitle('📊 Tu Información de Pity')
     .setDescription('Sistema de garantía de personajes raros')
     .addFields(
-      { name: 'Tiradas desde último SSR', value: `${pityData.counter}/90`, inline: true },
-      { name: 'Próximo SSR garantizado en', value: `${90 - pityData.counter} tiradas`, inline: true },
+      { name: 'Tiradas desde último SSR', value: `${pityData.counter}/${pityMax}`, inline: true },
+      { name: 'Próximo SSR garantizado en', value: `${pityMax - pityData.counter} tiradas`, inline: true },
       { name: 'Sistema 50/50', value: fiftyFiftyStatus, inline: false }
     )
     .setFooter({ text: 'El pity se resetea al obtener un SSR. Si pierdes el 50/50 (obtienes estándar), el próximo SSR será promocional garantizado.' });
@@ -1956,6 +1959,47 @@ async function handleResetCollectable(message, args) {
     .setDescription(`Los coleccionables de **${item.name}** han sido reseteados para ${user.user.username}.`);
 
   await message.channel.send({ embeds: [embed] });
+}
+
+async function handleEditPity(message, args) {
+  if (!message.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
+    return message.reply('❌ Solo administradores pueden usar este comando.');
+  }
+
+  const guildId = message.guild?.id;
+  if (!guildId) return;
+
+  if (args.length === 0) {
+    const currentPity = await storage.getConfig(guildId, 'pity_max') || 90;
+    return message.reply(`⏱️ Pity actual: **${currentPity}** tiradas\n\nPara cambiarlo usa: \`*editpity <número>\`\nEjemplo: \`*editpity 100\` (el pity será a las 100 tiradas)`);
+  }
+
+  if (args[0].toLowerCase() === 'reset' || args[0].toLowerCase() === 'default') {
+    await storage.setConfig(guildId, 'pity_max', 90);
+    const embed = new EmbedBuilder()
+      .setColor(0x00FF00)
+      .setTitle('✅ Pity Reseteado')
+      .setDescription(`El pity ha sido reseteado al valor por defecto: **90 tiradas**`);
+    return message.reply({ embeds: [embed] });
+  }
+
+  const pityMax = parseInt(args[0]);
+
+  if (isNaN(pityMax) || pityMax < 1 || pityMax > 500) {
+    return message.reply('❌ El pity debe ser un número entre 1 y 500.\n\nEjemplo: `*editpity 100` para que el pity sea a las 100 tiradas');
+  }
+
+  await storage.setConfig(guildId, 'pity_max', pityMax);
+
+  const embed = new EmbedBuilder()
+    .setColor(0x00FF00)
+    .setTitle('✅ Pity Configurado')
+    .setDescription(`El pity ha sido actualizado a: **${pityMax} tiradas**`)
+    .addFields(
+      { name: 'Nota', value: 'Los usuarios recibirán un SSR garantizado al llegar a este número de tiradas sin obtener uno.', inline: false }
+    );
+
+  await message.reply({ embeds: [embed] });
 }
 
 async function handleGirarSlash(interaction) {
