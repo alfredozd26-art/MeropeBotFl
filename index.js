@@ -2463,35 +2463,44 @@ async function handleSell(message, args) {
 
   try {
     // Llamar a la API de UnbelievaBoat para dar el dinero
-    const response = await axios.post('https://api.unbelieva.boat/economy/add', {
-      token: process.env.UNBELIEVABOAT_API_TOKEN,
-      user_id: message.author.id,
-      amount: totalPrice,
-      guild_id: guildId
-    });
+    const response = await axios.patch(
+      `https://unbelievaboat.com/api/v1/guilds/${guildId}/users/${message.author.id}`,
+      {
+        cash: totalPrice,
+        reason: `Venta de ${quantity}x ${item.name}`
+      },
+      {
+        headers: {
+          'Authorization': process.env.UNBELIEVABOAT_API_TOKEN,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
 
-    if (response.data.success) {
-      // Remover los items del inventario del usuario
-      await storage.removeCollectable(guildId, message.author.id, item.name, quantity);
+    // Remover los items del inventario del usuario
+    await storage.removeCollectable(guildId, message.author.id, item.name, quantity);
 
-      const embed = new EmbedBuilder()
-        .setColor(0x00FF00)
-        .setTitle('✅ Venta Exitosa')
-        .setDescription(`Has vendido **${quantity}x ${item.name}** por ${totalPrice} en UnbelievaBoat.`)
-        .addFields(
-          { name: 'Precio Unitario', value: `${item.sellPrice}`, inline: true },
-          { name: 'Cantidad Vendida', value: `${quantity}`, inline: true },
-          { name: 'Dinero Recibido', value: `${totalPrice}`, inline: false }
-        );
+    const embed = new EmbedBuilder()
+      .setColor(0x00FF00)
+      .setTitle('✅ Venta Exitosa')
+      .setDescription(`Has vendido **${quantity}x ${item.name}** por **${totalPrice}** 💰`)
+      .addFields(
+        { name: 'Precio Unitario', value: `${item.sellPrice} 💰`, inline: true },
+        { name: 'Cantidad Vendida', value: `${quantity}x`, inline: true },
+        { name: 'Dinero Recibido', value: `${totalPrice} 💰`, inline: false }
+      );
 
-      await message.reply({ embeds: [embed] });
-    } else {
-      console.error('UnbelievaBoat API Error:', response.data.message);
-      await message.reply('❌ Ocurrió un error al procesar la venta con UnbelievaBoat. Por favor, contacta a un administrador.');
-    }
+    await message.reply({ embeds: [embed] });
   } catch (error) {
-    console.error('Error al contactar UnbelievaBoat API:', error.message);
-    await message.reply('❌ Ocurrió un error de red al intentar procesar la venta con UnbelievaBoat. Por favor, inténtalo de nuevo más tarde o contacta a un administrador.');
+    console.error('Error al contactar UnbelievaBoat API:', error.response?.data || error.message);
+    
+    if (error.response?.status === 401) {
+      await message.reply('❌ El token de la API de UnbelievaBoat es inválido. Contacta a un administrador para configurarlo correctamente.');
+    } else if (error.response?.status === 404) {
+      await message.reply('❌ No se encontró el servidor o usuario en UnbelievaBoat. Asegúrate de que el bot de UnbelievaBoat esté en el servidor.');
+    } else {
+      await message.reply('❌ Ocurrió un error al procesar la venta. Por favor, inténtalo de nuevo más tarde o contacta a un administrador.');
+    }
   }
 }
 
