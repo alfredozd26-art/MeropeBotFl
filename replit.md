@@ -13,12 +13,11 @@ Bot de Discord tipo gacha desarrollado por Gina y amigos para un proyecto univer
 
 ## Cambios Recientes
 
-### Sistema Anti-Spam Mejorado y Comandos Slash (Octubre 2025)
-- **Cooldown dinámico:** Ahora el cooldown se sincroniza con el `pull_timer` configurado
-- **Remoción inmediata de tickets:** Los roles de ticket se quitan al inicio del spin (no al final)
+### Sistema Anti-Spam Optimizado y Comandos Slash (Octubre 2025)
+- **Cooldown fijo de 5 segundos:** Sistema simple y efectivo de prevención de spam
+- **Delay de 1 segundo al quitar roles:** Los tickets se quitan después de 1 segundo para evitar errores de Discord API
 - **Prevención total de spam:** Imposible hacer múltiples spins con un solo ticket
-- **Aplicado a `*spin` y `*spin10`:** Ambos comandos tienen protección anti-spam
-- **Fórmula del cooldown:** `pull_timer + 2000ms` (2 segundos de margen de seguridad)
+- **Aplicado a todos los comandos:** `*spin`, `*spin10`, `/spin`, `/spin10`
 - **Mensaje mejorado:** En lugar de "Cooldown Activo" ahora muestra "🎰 Tirada en Curso" más estético
 - **Comandos slash añadidos:**
   - `/spin` - Realiza una tirada del gacha (equivalente a `*spin`)
@@ -62,6 +61,19 @@ Bot de Discord tipo gacha desarrollado por Gina y amigos para un proyecto univer
    - Items, probabilidades y canjes independientes
    - GIFs personalizables para tiradas
    - Roles de ticket configurables
+
+5. **Items Secretos (🔒)**
+   - Los items secretos NO aparecen en el banner público (`*banner`)
+   - Solo los administradores pueden ver el banner secreto con `*secretbanner`
+   - **Probabilidad real:** Los items secretos compiten con TODOS los items del pool total
+   - Ejemplo de probabilidad:
+     - Item Normal A: chance 10
+     - Item Normal B: chance 10
+     - Item Secreto: chance 1
+     - **Total pool = 21**
+     - Probabilidad real del secreto = 1/21 = **4.76%** (no 100%)
+   - El "100%" que aparece en `*secretbanner` solo es entre los secretos entre sí
+   - Se pueden obtener en cualquier tirada normal sin hacer nada especial
 
 ## Arquitectura del Proyecto
 

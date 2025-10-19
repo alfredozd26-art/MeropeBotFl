@@ -195,15 +195,15 @@ async function handleGirar(message) {
     return message.reply({ embeds: [embed] });
   }
 
-  // Obtener pull_timer para calcular cooldown dinámico
-  const pullTimer = await storage.getConfig(guildId, 'pull_timer') || DEFAULT_PULL_TIMER;
-  const cooldownTime = pullTimer + 2000; // pull_timer + 2 segundos de margen
-
-  // Activar cooldown dinámico basado en pull_timer
+  // Activar cooldown de 5 segundos
+  const cooldownTime = 5000; // 5 segundos fijos
   spinCooldowns.set(cooldownKey, Date.now() + cooldownTime);
   setTimeout(() => spinCooldowns.delete(cooldownKey), cooldownTime);
 
-  // QUITAR EL ROL INMEDIATAMENTE para prevenir spam
+  // Esperar 1 segundo antes de quitar el rol (para evitar errores)
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // Quitar el rol después de 1 segundo
   const ticketRoleToRemove = member.roles.cache.find((role) =>
     role.name.toLowerCase() === ticketRole.toLowerCase() || role.id === ticketRole
   );
@@ -211,7 +211,7 @@ async function handleGirar(message) {
   if (ticketRoleToRemove) {
     try {
       await member.roles.remove(ticketRoleToRemove);
-      console.log(`✅ Ticket "${ticketRoleToRemove.name}" removido inmediatamente (anti-spam)`);
+      console.log(`✅ Ticket "${ticketRoleToRemove.name}" removido (con delay de 1s)`);
     } catch (error) {
       console.error(`❌ Error al remover ticket "${ticketRoleToRemove.name}":`, error.message);
       
@@ -401,7 +401,10 @@ async function handleGirar10(message) {
     return message.reply({ embeds: [embed] });
   }
 
-  // QUITAR EL ROL INMEDIATAMENTE para prevenir spam
+  // Esperar 1 segundo antes de quitar el rol (para evitar errores)
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // Quitar el rol después de 1 segundo
   const ticketRoleToRemove = member.roles.cache.find((role) =>
     role.name.toLowerCase() === ticketRole10.toLowerCase() || role.id === ticketRole10
   );
@@ -409,7 +412,7 @@ async function handleGirar10(message) {
   if (ticketRoleToRemove) {
     try {
       await member.roles.remove(ticketRoleToRemove);
-      console.log(`✅ Ticket x10 "${ticketRoleToRemove.name}" removido inmediatamente (anti-spam)`);
+      console.log(`✅ Ticket x10 "${ticketRoleToRemove.name}" removido (con delay de 1s)`);
     } catch (error) {
       console.error(`❌ Error al remover ticket x10:`, error.message);
       
@@ -1994,15 +1997,15 @@ async function handleGirarSlash(interaction) {
     return interaction.reply({ embeds: [embed], ephemeral: true });
   }
 
-  // Obtener pull_timer para calcular cooldown dinámico
-  const pullTimer = await storage.getConfig(guildId, 'pull_timer') || DEFAULT_PULL_TIMER;
-  const cooldownTime = pullTimer + 2000;
-
-  // Activar cooldown dinámico basado en pull_timer
+  // Activar cooldown de 5 segundos
+  const cooldownTime = 5000; // 5 segundos fijos
   spinCooldowns.set(cooldownKey, Date.now() + cooldownTime);
   setTimeout(() => spinCooldowns.delete(cooldownKey), cooldownTime);
 
-  // QUITAR EL ROL INMEDIATAMENTE para prevenir spam
+  // Esperar 1 segundo antes de quitar el rol (para evitar errores)
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // Quitar el rol después de 1 segundo
   const ticketRoleToRemove = member.roles.cache.find((role) =>
     role.name.toLowerCase() === ticketRole.toLowerCase() || role.id === ticketRole
   );
@@ -2010,7 +2013,7 @@ async function handleGirarSlash(interaction) {
   if (ticketRoleToRemove) {
     try {
       await member.roles.remove(ticketRoleToRemove);
-      console.log(`✅ Ticket "${ticketRoleToRemove.name}" removido inmediatamente (anti-spam) [slash]`);
+      console.log(`✅ Ticket "${ticketRoleToRemove.name}" removido (con delay de 1s) [slash]`);
     } catch (error) {
       console.error(`❌ Error al remover ticket "${ticketRoleToRemove.name}":`, error.message);
       
@@ -2037,6 +2040,8 @@ async function handleGirarSlash(interaction) {
     : await storage.getConfig(guildId, 'pity_gif');
 
   if (gifToShow) {
+    const pullTimer = await storage.getConfig(guildId, 'pull_timer') || DEFAULT_PULL_TIMER;
+    
     const loadingEmbed = new EmbedBuilder()
       .setColor(0xFFD700)
       .setTitle('🌟 Realizando tirada...')
@@ -2202,7 +2207,12 @@ async function handleGirar10Slash(interaction) {
     return interaction.reply({ embeds: [embed], ephemeral: true });
   }
 
-  // QUITAR EL ROL INMEDIATAMENTE para prevenir spam
+  await interaction.deferReply();
+
+  // Esperar 1 segundo antes de quitar el rol (para evitar errores)
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // Quitar el rol después de 1 segundo
   const ticketRoleToRemove = member.roles.cache.find((role) =>
     role.name.toLowerCase() === ticketRole10.toLowerCase() || role.id === ticketRole10
   );
@@ -2210,7 +2220,7 @@ async function handleGirar10Slash(interaction) {
   if (ticketRoleToRemove) {
     try {
       await member.roles.remove(ticketRoleToRemove);
-      console.log(`✅ Ticket x10 "${ticketRoleToRemove.name}" removido inmediatamente (anti-spam) [slash]`);
+      console.log(`✅ Ticket x10 "${ticketRoleToRemove.name}" removido (con delay de 1s) [slash]`);
     } catch (error) {
       console.error(`❌ Error al remover ticket x10:`, error.message);
       
@@ -2219,13 +2229,11 @@ async function handleGirar10Slash(interaction) {
           .setColor(0xFFA500)
           .setTitle('⚠️ No se pudo remover el ticket')
           .setDescription(`El bot no tiene permisos para remover el rol **${ticketRoleToRemove.name}**.\n\n**Solución:** Asegúrate de que el rol del bot esté por encima de este rol en la jerarquía del servidor.`);
-        await interaction.reply({ embeds: [warningEmbed], ephemeral: true });
+        await interaction.followUp({ embeds: [warningEmbed], ephemeral: true });
         return;
       }
     }
   }
-
-  await interaction.deferReply();
 
   const results = [];
 
