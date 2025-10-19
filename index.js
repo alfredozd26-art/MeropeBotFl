@@ -802,7 +802,7 @@ async function handleEditItem(message, args) {
   if (!message.channel.isSendable()) return;
 
   if (args.length < 2) {
-    return message.channel.send('❌ Uso: `*edititem <nombre> <campo> <valor...>`\n**Campos:** chance, rarity, reply, tokens, role-given, object, promo, secret, collectable\n\nEjemplos:\n`*edititem Joker rarity SSR`\n`*edititem Joker chance 10`\n`*edititem Joker reply https://imagen.gif`\n`*edititem Joker tokens si`\n`*edititem Joker role-given NombreRol`\n`*edititem Joker promo true`\n`*edititem Joker secret true`\n`*edititem "Cuerpo Santo" collectable 5`');
+    return message.channel.send('❌ Uso: `*edititem <nombre> <campo> <valor...>`\n**Campos:** chance, rarity, reply, tokens, role-given, object, promo, secret, collectable, sellprice\n\nEjemplos:\n`*edititem Joker rarity SSR`\n`*edititem Joker chance 10`\n`*edititem Joker reply https://imagen.gif`\n`*edititem Joker tokens si`\n`*edititem Joker role-given NombreRol`\n`*edititem Joker promo true`\n`*edititem Joker secret true`\n`*edititem "Cuerpo Santo" collectable 5`\n`*edititem "Jack Frost" sellprice 1000`');
   }
 
   let itemName;
@@ -969,8 +969,17 @@ async function handleEditItem(message, args) {
     await storage.updateItem(guildId, item.name, 'replyCollectable3', reply || null);
     return message.channel.send(`✅ Reply coleccionable 3 del premio **${item.name}** actualizado.`);
 
+  } else if (field === 'sellprice') {
+    const price = parseInt(valueArgs[0]);
+    if (isNaN(price) || price < 0) {
+      return message.channel.send('❌ El precio de venta debe ser un número mayor o igual a 0.');
+    }
+
+    await storage.updateItem(guildId, item.name, 'sellPrice', price);
+    return message.channel.send(`✅ El precio de venta del item **${item.name}** ha sido actualizado a **${price}**.`);
+
   } else {
-    return message.channel.send('❌ Campo inválido. Usa: chance, rarity, reply, tokens, role-given, object, promo, secret, collectable, name, replycollectable1, replycollectable2, replycollectable3');
+    return message.channel.send('❌ Campo inválido. Usa: chance, rarity, reply, tokens, role-given, object, promo, secret, collectable, name, replycollectable1, replycollectable2, replycollectable3, sellprice');
   }
 }
 
