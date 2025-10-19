@@ -319,6 +319,19 @@ async function resetCollectable(guildId, userId, itemName) {
   }
 }
 
+async function removeCollectable(guildId, userId, itemName, amount) {
+  const filePath = getFilePath(guildId, 'collectables');
+  const data = await readJSON(filePath, {});
+  
+  if (!data[userId] || !data[userId][itemName]) {
+    return false;
+  }
+  
+  data[userId][itemName] = Math.max(0, data[userId][itemName] - amount);
+  await writeJSON(filePath, data);
+  return true;
+}
+
 async function getExchangeRules(guildId) {
   const filePath = getFilePath(guildId, 'exchanges');
   const data = await readJSON(filePath, { exchanges: [] });
@@ -438,6 +451,7 @@ module.exports = {
   getUserCollectables,
   incrementCollectable,
   resetCollectable,
+  removeCollectable,
   getExchangeRules,
   createExchange,
   updateExchangePrices,

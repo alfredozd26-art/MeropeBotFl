@@ -2,6 +2,7 @@ const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, Permission
 const dotenv = require('dotenv');
 const storage = require('./server/storage');
 const { searchItemByPartialName, searchItemByPartialNameSync } = require('./utils/itemSearch');
+const axios = require('axios');
 
 dotenv.config();
 
@@ -151,6 +152,10 @@ client.on('messageCreate', async (message) => {
       await handleResetCollectable(message, args);
     } else if (command === 'editpity') {
       await handleEditPity(message, args);
+    } else if (command === 'sell') {
+      await handleSell(message, args);
+    } else if (command === 'edititem') { // Added edititem again to ensure it's handled, just in case.
+      await handleEditItem(message, args);
     }
   } catch (error) {
     console.error('Error:', error);
@@ -216,7 +221,7 @@ async function handleGirar(message) {
       console.log(`✅ Ticket "${ticketRoleToRemove.name}" removido (con delay de 1s)`);
     } catch (error) {
       console.error(`❌ Error al remover ticket "${ticketRoleToRemove.name}":`, error.message);
-      
+
       if (error.code === 50001) {
         const warningEmbed = new EmbedBuilder()
           .setColor(0xFFA500)
@@ -417,7 +422,7 @@ async function handleGirar10(message) {
       console.log(`✅ Ticket x10 "${ticketRoleToRemove.name}" removido (con delay de 1s)`);
     } catch (error) {
       console.error(`❌ Error al remover ticket x10:`, error.message);
-      
+
       if (error.code === 50001) {
         const warningEmbed = new EmbedBuilder()
           .setColor(0xFFA500)
@@ -1441,7 +1446,7 @@ async function handleHelp(message) {
       },
       {
         name: '🎒 Comandos de Inventario',
-        value: '**`*tokens`** - Ver tus Tokens acumulados\n**`*inventory`** - Ver tus premios y objetos coleccionables\n**`*canjear <ID>`** - Canjear Tokens por recompensas\n**`*listexchanges`** - Ver canjes disponibles',
+        value: '**`*tokens`** - Ver tus Tokens acumulados\n**`*inventory`** - Ver tus premios y objetos coleccionables\n**`*sell <item> <cantidad>`** - Vender objetos por dinero\n**`*canjear <ID>`** - Canjear Tokens por recompensas\n**`*listexchanges`** - Ver canjes disponibles',
         inline: false
       },
       {
@@ -1474,7 +1479,7 @@ async function handleFixHelp(message) {
       },
       {
         name: '🎒 Comandos de Inventario',
-        value: '**`*tokens`** - Ver tus Tokens acumulados\n**`*inventory`** - Ver tus premios y objetos coleccionables\n**`*canjear <ID>`** - Canjear Tokens por recompensas\n**`*listexchanges`** - Ver canjes disponibles',
+        value: '**`*tokens`** - Ver tus Tokens acumulados\n**`*inventory`** - Ver tus premios y objetos coleccionables\n**`*sell <item> <cantidad>`** - Vender objetos por dinero\n**`*canjear <ID>`** - Canjear Tokens por recompensas\n**`*listexchanges`** - Ver canjes disponibles',
         inline: false
       },
       {
@@ -2068,7 +2073,7 @@ async function handleGirarSlash(interaction) {
       console.log(`✅ Ticket "${ticketRoleToRemove.name}" removido (con delay de 1s) [slash]`);
     } catch (error) {
       console.error(`❌ Error al remover ticket "${ticketRoleToRemove.name}":`, error.message);
-      
+
       if (error.code === 50001) {
         const warningEmbed = new EmbedBuilder()
           .setColor(0xFFA500)
@@ -2093,7 +2098,7 @@ async function handleGirarSlash(interaction) {
 
   if (gifToShow) {
     const pullTimer = await storage.getConfig(guildId, 'pull_timer') || DEFAULT_PULL_TIMER;
-    
+
     const loadingEmbed = new EmbedBuilder()
       .setColor(0xFFD700)
       .setTitle('🌟 Realizando tirada...')
@@ -2275,7 +2280,7 @@ async function handleGirar10Slash(interaction) {
       console.log(`✅ Ticket x10 "${ticketRoleToRemove.name}" removido (con delay de 1s) [slash]`);
     } catch (error) {
       console.error(`❌ Error al remover ticket x10:`, error.message);
-      
+
       if (error.code === 50001) {
         const warningEmbed = new EmbedBuilder()
           .setColor(0xFFA500)
@@ -2414,6 +2419,82 @@ async function handleGirar10Slash(interaction) {
 
   await interaction.followUp({ embeds: [embed] });
 }
+
+async function handleSell(message, args) {
+  const guildId = message.guild?.id;
+  if (!guildId) return;
+
+  if (args.length < 2) {
+    return message.reply('❌ Uso: `*sell <nombre del item> <cantidad>`\n\n**Nota:** Solo se pueden vender objetos de tipo "persona" u "objeto". No se pueden vender personajes secretos ni personajes normales que no sean de tipo "persona" u "objeto".');
+  }
+
+  const itemName = args.slice(0, -1).join(' ');
+  const quantity = parseInt(args[args.length - 1]);
+
+  if (isNaN(quantity) || quantity <= 0) {
+    return message.reply('❌ La cantidad debe ser un número válido mayor a 0.');
+  }
+
+  const allItems = await storage.getAllItems(guildId);
+  const item = await searchItemByPartialName(allItems, itemName);
+
+  if (!item) {
+    return message.reply(`❌ No se encontró el item **${itemName}**.`);
+  }
+
+  const objectType = (item.objectType || 'personaje').toLowerCase();
+  if (item.secret || (objectType !== 'persona' && objectType !== 'objeto' && objectType !== 'object')) {
+    return message.reply(`❌ No puedes vender el item **${item.name}**. Solo se pueden vender items de tipo "persona" u "objeto" que no sean secretos.`);
+  }
+
+  const userCollectables = await storage.getUserCollectables(guildId, message.author.id);
+  const currentAmount = userCollectables[item.name] || 0;
+
+  if (currentAmount < quantity) {
+    return message.reply(`❌ No tienes suficientes unidades de **${item.name}** para vender.\nTienes: ${currentAmount}x`);
+  }
+
+  // Verificar si el item tiene un precio de venta configurado
+  if (item.sellPrice === undefined || item.sellPrice === null) {
+    return message.reply(`❌ El item **${item.name}** no tiene un precio de venta configurado. Pide a un administrador que lo configure con \`*edititem ${item.name} sellprice <precio>\`.`);
+  }
+
+  const totalPrice = item.sellPrice * quantity;
+
+  try {
+    // Llamar a la API de UnbelievaBoat para dar el dinero
+    const response = await axios.post('https://api.unbelieva.boat/economy/add', {
+      token: process.env.UNBELIEVABOAT_API_TOKEN,
+      user_id: message.author.id,
+      amount: totalPrice,
+      guild_id: guildId
+    });
+
+    if (response.data.success) {
+      // Remover los items del inventario del usuario
+      await storage.removeCollectable(guildId, message.author.id, item.name, quantity);
+
+      const embed = new EmbedBuilder()
+        .setColor(0x00FF00)
+        .setTitle('✅ Venta Exitosa')
+        .setDescription(`Has vendido **${quantity}x ${item.name}** por ${totalPrice} en UnbelievaBoat.`)
+        .addFields(
+          { name: 'Precio Unitario', value: `${item.sellPrice}`, inline: true },
+          { name: 'Cantidad Vendida', value: `${quantity}`, inline: true },
+          { name: 'Dinero Recibido', value: `${totalPrice}`, inline: false }
+        );
+
+      await message.reply({ embeds: [embed] });
+    } else {
+      console.error('UnbelievaBoat API Error:', response.data.message);
+      await message.reply('❌ Ocurrió un error al procesar la venta con UnbelievaBoat. Por favor, contacta a un administrador.');
+    }
+  } catch (error) {
+    console.error('Error al contactar UnbelievaBoat API:', error.message);
+    await message.reply('❌ Ocurrió un error de red al intentar procesar la venta con UnbelievaBoat. Por favor, inténtalo de nuevo más tarde o contacta a un administrador.');
+  }
+}
+
 
 const token = process.env.DISCORD_TOKEN;
 
